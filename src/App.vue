@@ -91,6 +91,12 @@ export default {
     return {
       isLoLConnected: false,
       lolConnectionInterval: null,
+      // Polls the updater every 10 minutes while the app is open so users
+      // who keep the window running for days/weeks still get forced onto
+      // newer versions. The check fires the same `ready-for-update-check`
+      // bridge channel the startup boot uses — `AppUpdates` then takes
+      // over the whole UI as soon as `isCheckingForUpdates` flips true.
+      updateCheckInterval: null,
     }
   },
   computed: {
@@ -226,6 +232,15 @@ export default {
       }, 5000)
     }
     this.$bridge.send('ready-for-update-check')
+    // Re-check every 10 minutes. The guard skips ticks where a check is
+    // already in flight or an update is already pending — otherwise rapid
+    // ticks could stack download requests on top of each other.
+    if (!this.updateCheckInterval) {
+      this.updateCheckInterval = setInterval(() => {
+        if (this.isCheckingForUpdates || this.hasNewRelease || this.isUpdateReadyToInstall) return
+        this.$bridge.send('ready-for-update-check')
+      }, 10 * 60 * 1000)
+    }
     this.$bridge.on('lol-connect', this.onLoLConnect)
     this.$bridge.on('lol-ready-check', this.onLoLReadyCheck)
     this.$bridge.on('lol-account-data', this.onLoLAccountData)
@@ -247,6 +262,7 @@ export default {
     this.$bridge.removeListener('update-downloaded', this.onUpdateDownloaded)
     this.$bridge.removeListener('dev-mode-signal', this.onDevModeSignal)
     if (this.lolConnectionInterval) clearInterval(this.lolConnectionInterval)
+    if (this.updateCheckInterval) clearInterval(this.updateCheckInterval)
   },
 }
 </script>
