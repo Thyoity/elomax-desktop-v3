@@ -23,6 +23,12 @@ const isTauriRuntime: boolean =
 
 const SYNTHETIC_SET: ReadonlySet<string> = new Set(Object.values(SYNTHETIC_CHANNELS))
 
+// Held between `ready-for-update-check` (which downloads) and `install-update`
+// (which installs + relaunches) so the user-confirmed install step has access
+// to the same Update handle the download was performed on. Only one update
+// can be pending at a time — newer checks overwrite this reference.
+let pendingUpdate: { install: () => Promise<void> } | null = null
+
 const isSyntheticChannel = (channel: string): boolean => SYNTHETIC_SET.has(channel)
 
 // Maps legacy `ipcRenderer.send(channel, arg)` calls to the right Tauri
@@ -82,18 +88,24 @@ const SEND_HANDLERS: Record<string, SendHandler> = {
     }
   },
   'ready-for-update-check': (_arg, { bridge }) => {
-    // Real auto-update flow via `@tauri-apps/plugin-updater`. We map the
-    // promise-based plugin API onto the legacy synthetic event channels so
-    // the existing UI in App.vue keeps working without changes:
+    // Auto-update flow via `@tauri-apps/plugin-updater`, mapped onto the
+    // legacy synthetic event channels so the existing UI in App.vue works:
     //   - `checking-for-update`         emitted while `check()` is running
     //   - `update-not-available`        no newer version, or browser-only run
     //   - `update-available`            new version found; download starting
-    //   - `update-download-progress`    chunk arrived (percent / bytes)
-    //   - `update-downloaded`           download + install finished, ready to relaunch
+    //   - `update-download-progress`    chunk arrived (bytes transferred/total)
+    //   - `update-downloaded`           download finished, ready to install
     //   - `update-error`                any failure — UI should not block the user
+    //
+    // IMPORTANT: download() and install() are deliberately split. Calling
+    // downloadAndInstall() runs the NSIS installer as soon as the bytes
+    // arrive, and NSIS force-kills the running process during install —
+    // so an auto-check in the background would look like a silent crash
+    // to the user. By stopping after download, we hold the new bundle in
+    // memory until the user explicitly clicks "Reiniciar e instalar",
+    // and only then dispatch `install-update` (below) to run the install
+    // + relaunch. The UI shows a graceful "Ready" state in between.
     if (!isTauriRuntime) {
-      // Plain `vite dev` in a browser — pretend there's no update so the
-      // updates screen dismisses immediately.
       setTimeout(() => bridge.emitSynthetic(SYNTHETIC_CHANNELS.updateNotAvailable, null), 0)
       return
     }
@@ -113,7 +125,7 @@ const SEND_HANDLERS: Record<string, SendHandler> = {
 
         let contentLength = 0
         let downloaded = 0
-        await update.downloadAndInstall((event) => {
+        await update.download((event) => {
           if (event.event === 'Started') {
             contentLength = event.data.contentLength ?? 0
             bridge.emitSynthetic(SYNTHETIC_CHANNELS.updateDownloadProgress, {
@@ -130,29 +142,37 @@ const SEND_HANDLERS: Record<string, SendHandler> = {
             bridge.emitSynthetic(SYNTHETIC_CHANNELS.updateDownloaded, null)
           }
         })
+
+        // Hold the Update handle alive until `install-update` fires so we
+        // can run the install + relaunch in response to a user click.
+        // Stored on a module-scope variable rather than passing through
+        // the bridge for simplicity — only one update can be pending at
+        // a time anyway.
+        pendingUpdate = update
       } catch (err) {
         bridge.emitSynthetic(SYNTHETIC_CHANNELS.updateError, {
           message: err instanceof Error ? err.message : String(err),
         })
-        // Fall through to "not available" so the UI doesn't get stuck on the
-        // updates screen when the updater fails for transient reasons (no
-        // network, server down, etc.).
         bridge.emitSynthetic(SYNTHETIC_CHANNELS.updateNotAvailable, null)
       }
     })()
   },
   'install-update': () => {
-    // `downloadAndInstall` above already installed the new binary; we just
-    // need to relaunch the process so Windows picks it up.
-    //
-    // We invoke the custom `cleanup_and_relaunch` Tauri command instead of
-    // plugin-process's `relaunch()`, because the latter exits the process
-    // too fast for `TrayIcon`'s Drop impl to run — leaving a phantom icon
-    // in the Windows shell tray that lives next to the new process's icon
-    // until the user hovers over it. `cleanup_and_relaunch` explicitly
-    // removes the tray (NIM_DELETE on Windows) before restarting.
-    if (!isTauriRuntime) return
-    void invoke('cleanup_and_relaunch').catch(() => undefined)
+    // Runs the NSIS installer for the bundle we downloaded earlier and then
+    // restarts the app on the new binary. NSIS will force-kill the running
+    // process partway through install, so we explicitly remove the tray
+    // icon first (via the Rust `cleanup_and_relaunch` command, which also
+    // performs the restart in case NSIS doesn't auto-launch the new exe).
+    if (!isTauriRuntime || !pendingUpdate) return
+    void (async () => {
+      try {
+        await pendingUpdate.install()
+      } catch {
+        // If install() throws, fall through to cleanup_and_relaunch anyway
+        // so we don't end up stuck on a frozen "ready" screen.
+      }
+      void invoke('cleanup_and_relaunch').catch(() => undefined)
+    })()
   },
 }
 
