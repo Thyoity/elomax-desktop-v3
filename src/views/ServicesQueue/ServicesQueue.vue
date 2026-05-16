@@ -466,8 +466,8 @@
 <script>
 import { badgeUrl } from '@/config/assets'
 import { mapState, mapMutations } from '@/stores/compat'
-import LeagueOfLegendsButtonComponent from '@/components/Buttons/LeagueOfLegends'
-import WildRiftButtonComponent from '@/components/Buttons/WildRift'
+import LeagueOfLegendsButtonComponent from '@/components/Buttons/LeagueOfLegends.vue'
+import WildRiftButtonComponent from '@/components/Buttons/WildRift.vue'
 
 export default {
   name: 'ServicesQueue',

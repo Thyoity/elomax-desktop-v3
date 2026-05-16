@@ -505,8 +505,8 @@
 import { badgeUrl } from '@/config/assets'
 import { mapState, mapMutations, mapGetters } from '@/stores/compat'
 import dayjs from 'dayjs'
-import LeagueOfLegendsButtonComponent from '@/components/Buttons/LeagueOfLegends'
-import WildRiftButtonComponent from '@/components/Buttons/WildRift'
+import LeagueOfLegendsButtonComponent from '@/components/Buttons/LeagueOfLegends.vue'
+import WildRiftButtonComponent from '@/components/Buttons/WildRift.vue'
 
 export default {
   name: 'Services',

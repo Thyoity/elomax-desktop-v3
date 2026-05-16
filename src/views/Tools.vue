@@ -5,7 +5,7 @@
   </div>
 </template>
 <script>
-import LoadingComponent from '../components/Loading'
+import LoadingComponent from '../components/Loading.vue'
 export default {
   name: 'Home',
   components: {

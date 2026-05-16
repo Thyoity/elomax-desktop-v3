@@ -1,5 +1,13 @@
 /// <reference types="vite/client" />
 
+// IMPORTANT: this file MUST stay a module (have at least one top-level
+// import/export) so the `declare module 'vue'` block below is treated as a
+// MODULE AUGMENTATION instead of a wholesale replacement. The empty
+// `export {}` at the bottom is what guarantees that. Without it, this file
+// is a script and the `declare module 'vue'` shadows Vue's real types,
+// breaking imports like `App`, `Component`, `Directive`, `createApp`.
+export {}
+
 declare module '*.vue' {
   import type { DefineComponent } from 'vue'
   const component: DefineComponent<{}, {}, any>
@@ -38,5 +46,3 @@ interface ImportMeta {
   readonly env: ImportMetaEnv
 }
 
-declare module '@chenfengyuan/vue-countdown'
-declare module 'vue-multiselect'

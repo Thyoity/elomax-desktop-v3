@@ -51,6 +51,9 @@ export default {
   install(app: App) {
     app.use(VueToast, { position: 'top', duration: 5000 })
     const adapter = new LegacyToastAdapter()
-    app.config.globalProperties.$toast = adapter
+    // `globalProperties` is typed as readonly for augmented members in
+    // recent @vue/runtime-core; cast to assign at runtime (Vue itself does
+    // the same internally — the readonly is a consumer-side marker).
+    ;(app.config.globalProperties as any).$toast = adapter
   },
 }
