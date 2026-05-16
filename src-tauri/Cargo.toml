@@ -30,6 +30,7 @@ native-tls = { version = "0.2", features = ["vendored"] }
 once_cell = "1"
 parking_lot = "0.12"
 base64 = "0.22"
+notify = "6.1"
 
 [profile.release]
 panic = "abort"

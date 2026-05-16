@@ -4,6 +4,7 @@ use std::time::Duration;
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as BASE64;
 use futures_util::{SinkExt, StreamExt};
+use notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher};
 use reqwest::Client;
 use serde_json::Value;
 use tauri::{AppHandle, Emitter};
@@ -467,6 +468,124 @@ pub async fn gather_account_data(app: AppHandle) -> Result<(), String> {
         emit_error(&app, format!("Falha ao importar conta: {msg}"));
     }
     Ok(())
+}
+
+// --- Lockfile watcher --------------------------------------------------
+
+/// Spawns a long-lived task that watches the LoL lockfile via the OS-native
+/// filesystem-events API (ReadDirectoryChangesW on Windows, FSEvents on macOS,
+/// inotify on Linux). When the lockfile appears, we connect. When it
+/// disappears, we tear the connection down. This replaces the renderer's
+/// previous 5s polling — same observable behaviour, ~zero idle cost.
+///
+/// Caveats handled here:
+///   * The lockfile's parent dir might not exist yet (League not installed).
+///     We retry every 30s in that case so we eventually pick up an install.
+///   * fs-event APIs can occasionally miss events. The frontend keeps a 30s
+///     defensive heartbeat (`lolConnectionInterval` in App.vue) as a safety
+///     net. That heartbeat is also how users with a custom `lolPath` get
+///     reconciled, since this watcher only watches the default install path.
+///   * If the watcher itself errors out, the outer loop restarts it after a
+///     short backoff.
+pub fn start_lockfile_watcher(app: AppHandle) {
+    tokio::spawn(watcher_loop(app));
+}
+
+async fn watcher_loop(app: AppHandle) {
+    let lockfile = lockfile_path(None);
+    let parent = match lockfile.parent() {
+        Some(p) => p.to_path_buf(),
+        None => return,
+    };
+
+    // Snapshot state once before the watcher is up so launches where LoL is
+    // already running don't have to wait for the first heartbeat.
+    sync_lockfile_state(&app, &lockfile).await;
+
+    loop {
+        let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<notify::Result<Event>>();
+        let watcher: notify::Result<RecommendedWatcher> = RecommendedWatcher::new(
+            move |res| {
+                let _ = tx.send(res);
+            },
+            Config::default(),
+        );
+
+        let mut watcher = match watcher {
+            Ok(w) => w,
+            Err(_) => {
+                tokio::time::sleep(Duration::from_secs(30)).await;
+                continue;
+            }
+        };
+
+        if watcher.watch(&parent, RecursiveMode::NonRecursive).is_err() {
+            // Parent missing (no install at default path). The frontend's
+            // 30s heartbeat will still trigger connect attempts if the user
+            // configured a custom path elsewhere.
+            tokio::time::sleep(Duration::from_secs(30)).await;
+            continue;
+        }
+
+        // Re-sync once the watcher is established, in case the lockfile
+        // appeared during the gap between the snapshot above and now.
+        sync_lockfile_state(&app, &lockfile).await;
+
+        while let Some(res) = rx.recv().await {
+            match res {
+                Ok(event) => {
+                    if event.paths.iter().any(|p| p.ends_with("lockfile")) {
+                        sync_lockfile_state(&app, &lockfile).await;
+                    }
+                }
+                Err(_) => break,
+            }
+        }
+
+        // The watcher's send half dropped (error or external shutdown).
+        // Brief pause then rebuild — keeps us resilient to transient
+        // failures (LoL folder moved/recreated, permissions blip, etc.).
+        tokio::time::sleep(Duration::from_secs(5)).await;
+    }
+}
+
+/// Reconciles in-memory LCU state with what the lockfile says on disk.
+/// Idempotent: calling it repeatedly with the same disk state is a no-op.
+async fn sync_lockfile_state(app: &AppHandle, lockfile: &PathBuf) {
+    if lockfile.exists() {
+        // `connect()` is itself idempotent (stale-credential guard at the top
+        // returns early when already connected with the same port/password).
+        let _ = connect(app.clone(), None).await;
+        return;
+    }
+
+    // Lockfile gone — tear down any active connection so the renderer doesn't
+    // sit on a stale "connected" state. Doing this explicitly (vs. relying on
+    // the WS task to notice the socket close) makes the transition snappy and
+    // deterministic.
+    let was_connected = {
+        let mut state = LCU_STATE.lock();
+        let was = state.connected;
+        if let Some(handle) = state.ws_task.take() {
+            handle.abort();
+        }
+        state.connected = false;
+        state.password = None;
+        state.port = None;
+        was
+    };
+
+    if was_connected {
+        let _ = app.emit(
+            channels::LOL_CONNECT,
+            LolConnectEvent {
+                success: false,
+                message: Some("LoL fechou.".into()),
+                connection_data: None,
+                data: None,
+            },
+        );
+    }
 }
 
 // --- Extension trait on the global state -------------------------------

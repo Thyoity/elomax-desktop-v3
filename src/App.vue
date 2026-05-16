@@ -226,10 +226,21 @@ export default {
     },
   },
   mounted() {
+    // Event-driven LCU sync: a Rust-side filesystem watcher (see
+    // `lcu::start_lockfile_watcher` in src-tauri/src/lcu.rs) reacts to the
+    // lockfile appearing or disappearing in real time, so we don't poll
+    // every few seconds. This 30s heartbeat is a defensive safety net for
+    // two cases the watcher can't cover by itself:
+    //   1. Users with a custom `lolPath` — the watcher only follows the
+    //      default install dir, so we still need an occasional connect()
+    //      attempt with the user's path.
+    //   2. The native fs-events APIs occasionally drop events (rare, but
+    //      possible on rapid create/delete bursts). The heartbeat guarantees
+    //      the app heals within ~30s even if that happens.
     if (!this.lolConnectionInterval) {
       this.lolConnectionInterval = setInterval(() => {
         if (!this.isLoLAuthenticated) this.$bridge.send('lol-connect', this.lolPath)
-      }, 5000)
+      }, 30000)
     }
     this.$bridge.send('ready-for-update-check')
     // Re-check every 10 minutes. The guard skips ticks where a check is

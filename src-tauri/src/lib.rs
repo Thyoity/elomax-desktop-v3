@@ -136,6 +136,12 @@ pub fn run() {
                 })
                 .build(app)?;
 
+            // Filesystem watcher for the LoL lockfile — replaces the
+            // renderer's 5-second polling. Sees create/delete events from
+            // the OS as soon as they happen, so we react to LoL opening
+            // or closing without any idle CPU cost.
+            lcu::start_lockfile_watcher(app.handle().clone());
+
             Ok(())
         })
         // Intercept the main window's close button: hide instead of exit, so
