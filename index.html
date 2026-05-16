@@ -10,7 +10,14 @@
     <script type="module" src="/ionicons/ionicons.esm.js"></script>
     <script nomodule src="/ionicons/ionicons.js"></script>
   </head>
-  <body>
+  <!--
+    Inline dark background so the very first paint matches the app theme
+    instead of WebView2's default white. Without this you get a brief
+    white flash before Vue mounts and the SCSS bundle replaces this rule.
+    Window is also `"visible": false` in tauri.conf.json — it's revealed
+    from main.ts after Vue mounts.
+  -->
+  <body style="margin: 0; background-color: #16151e;">
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

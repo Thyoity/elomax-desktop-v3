@@ -488,7 +488,13 @@ pub async fn gather_account_data(app: AppHandle) -> Result<(), String> {
 ///   * If the watcher itself errors out, the outer loop restarts it after a
 ///     short backoff.
 pub fn start_lockfile_watcher(app: AppHandle) {
-    tokio::spawn(watcher_loop(app));
+    // `tauri::async_runtime::spawn` instead of `tokio::spawn` because this is
+    // called from the Builder::setup closure, which runs on the main thread
+    // before any tokio runtime context is entered there. Tauri exposes its
+    // own (tokio-backed) runtime for exactly this kind of bootstrap task —
+    // calling tokio::spawn directly here panics with "there is no reactor
+    // running, must be called from the context of a Tokio 1.x runtime".
+    tauri::async_runtime::spawn(watcher_loop(app));
 }
 
 async fn watcher_loop(app: AppHandle) {

@@ -99,6 +99,19 @@ app.component('AppWildRiftButton', fixedGameComponent(GameButton, 'wild-rift'))
 
 app.mount('#app')
 
+// The Tauri window is created with `visible: false` in tauri.conf.json so
+// we don't show WebView2's white default-paint before the Vue tree finishes
+// mounting. Reveal it now (on the next animation frame, after the first
+// paint of the real UI). In the plain `vite dev` browser tab `__TAURI__`
+// isn't present and this no-ops.
+if (typeof window !== 'undefined' && ((window as any).__TAURI_INTERNALS__ || (window as any).__TAURI__)) {
+  requestAnimationFrame(() => {
+    void import('@tauri-apps/api/window').then(({ getCurrentWindow }) => {
+      getCurrentWindow().show().catch(() => undefined)
+    })
+  })
+}
+
 function defineToggleButton() {
   return {
     name: 'AppToggleButton',
