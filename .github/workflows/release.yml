@@ -13,6 +13,15 @@ on:
 permissions:
   contents: write  # required to create releases
 
+# Opt the entire workflow into Node.js 24 for any JS-based action (checkout,
+# setup-node, cache, etc.). GitHub is forcing this default on 2026-06-02
+# (https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/);
+# setting it now silences the deprecation warning and switches us to the
+# newer runtime ahead of the cutover, with no behavioural change once the
+# default flips.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build-and-publish:
     runs-on: windows-latest
