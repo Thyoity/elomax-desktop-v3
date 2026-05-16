@@ -27,7 +27,9 @@ interface State {
 
 export const useAppStore = defineStore('app', {
   state: (): State => ({
-    appVersion: import.meta.env.VITE_APP_VERSION || '4.0.0',
+    // Injected by vite.config.ts at build time from package.json's `version`,
+    // so the value here always tracks whatever `npm run release` bumped to.
+    appVersion: __APP_VERSION__,
     isAuthenticated: false,
     summonerName: null,
     importedData: null,

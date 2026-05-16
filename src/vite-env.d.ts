@@ -5,8 +5,19 @@
 // MODULE AUGMENTATION instead of a wholesale replacement. The empty
 // `export {}` at the bottom is what guarantees that. Without it, this file
 // is a script and the `declare module 'vue'` shadows Vue's real types,
-// breaking imports like `App`, `Component`, `Directive`, `createApp`.
+// breaking imports like `App`, `Component`, `Directive`, `createApp'`.
 export {}
+
+// Injected by `vite.config.ts` (`define` option) at build time from
+// package.json's `version` field. Used by the app store so the UI never
+// drifts from the released artifact.
+//
+// `declare global` is required because this file is a module (thanks to
+// the `export {}` above) — a bare `declare const` would be a local-only
+// constant. Wrapping in `declare global` registers it on the global scope.
+declare global {
+  const __APP_VERSION__: string
+}
 
 declare module '*.vue' {
   import type { DefineComponent } from 'vue'

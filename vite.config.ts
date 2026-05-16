@@ -1,7 +1,13 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import Components from 'unplugin-vue-components/vite'
+import { readFileSync } from 'node:fs'
 import path from 'node:path'
+
+// Read package.json at config time so the in-app version display tracks
+// whatever `npm run release` last bumped. Exposed to the renderer as the
+// `__APP_VERSION__` define below.
+const pkg = JSON.parse(readFileSync(path.resolve(__dirname, 'package.json'), 'utf8'))
 
 // Maps legacy `App*`-prefixed component names to the actual filenames where
 // the filename doesn't carry the prefix. Lets templates keep using `<AppLogin />`
@@ -85,6 +91,12 @@ export default defineConfig(async () => ({
     target: 'esnext',
     minify: 'esbuild',
     sourcemap: false,
+  },
+  // Build-time constant injected into the renderer. Used by stores/app.ts
+  // so the version shown in the UI always matches package.json (which the
+  // release script keeps in sync with tauri.conf.json + Cargo.toml).
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
   },
   envPrefix: ['VITE_', 'TAURI_ENV_*'],
 }))
