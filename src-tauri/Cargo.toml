@@ -1,6 +1,6 @@
 [package]
 name = "elomax-desktop"
-version = "0.0.9"
+version = "0.0.10"
 description = "ELOMAX Desktop"
 authors = ["ELOMAX"]
 edition = "2021"
