@@ -1,0 +1,15 @@
+node_modules
+dist
+dist-ssr
+*.local
+.DS_Store
+.idea
+.vscode/*
+!.vscode/extensions.json
+src-tauri/target
+src-tauri/gen
+
+# Environment files (commit only .env.example)
+.env
+.env.local
+.env.*.local

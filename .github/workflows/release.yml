@@ -1,0 +1,66 @@
+name: Release
+
+# Triggered by `npm run release` pushing a tag like `v4.0.1`.
+# Builds the Windows installer, signs the updater artifact with the secret
+# Ed25519 key, and creates a GitHub Release with the binaries + `latest.json`
+# manifest that the in-app updater reads.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write  # required to create releases
+
+jobs:
+  build-and-publish:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: .
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            src-tauri/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('src-tauri/Cargo.lock') }}
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build, sign, and publish Tauri release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Generate locally with `npx @tauri-apps/cli signer generate`, then
+          # paste the private key and its password into the repo's Settings
+          # → Secrets and variables → Actions.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'ELOMAX Desktop ${{ github.ref_name }}'
+          releaseDraft: false
+          prerelease: false
+          # `tauri-action` produces `latest.json` automatically when
+          # `createUpdaterArtifacts` is enabled in tauri.conf.json. The
+          # auto-update endpoint in tauri.conf.json points to this file in
+          # the latest release.
+          includeUpdaterJson: true

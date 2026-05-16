@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ELOMAX — gerador de ícone</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: #16151e;
+        color: #e5e5e5;
+        font-family: system-ui, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 32px;
+        gap: 24px;
+      }
+      h1 { font-size: 18px; font-weight: 600; margin: 0; }
+      .preview {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        align-items: end;
+      }
+      .preview > div {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        color: #888;
+      }
+      canvas.preview-img {
+        border-radius: 8px;
+        background: repeating-conic-gradient(#202028 0% 25%, #2a2a35 0% 50%) 0 0 / 12px 12px;
+      }
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        justify-content: center;
+        align-items: center;
+        max-width: 720px;
+      }
+      label {
+        display: inline-flex;
+        flex-direction: column;
+        gap: 4px;
+        font-size: 12px;
+      }
+      input[type='color'], input[type='range'] {
+        cursor: pointer;
+      }
+      button {
+        background: #85d0ff;
+        color: #0a0a10;
+        border: 0;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      button:hover { background: #a4dcff; }
+    </style>
+  </head>
+  <body>
+    <h1>ELOMAX — gerador de ícone</h1>
+
+    <div class="controls">
+      <label>
+        Cor do fundo
+        <input type="color" id="bg" value="#16151e" />
+      </label>
+      <label>
+        Cor da logo
+        <input type="color" id="fg" value="#85d0ff" />
+      </label>
+      <label>
+        Padding interno
+        <input type="range" id="padding" min="0" max="30" value="18" />
+        <small id="padding-label">18%</small>
+      </label>
+      <label>
+        Glow
+        <input type="range" id="glow" min="0" max="60" value="20" />
+        <small id="glow-label">20</small>
+      </label>
+      <label>
+        Gradiente
+        <input type="checkbox" id="gradient" checked />
+      </label>
+      <button id="download">Baixar 1024×1024 PNG</button>
+    </div>
+
+    <div class="preview" id="preview">
+      <!-- thumbnails injected here -->
+    </div>
+
+    <p style="max-width: 640px; text-align: center; color: #888; font-size: 13px; line-height: 1.5">
+      Depois de baixar, rode no terminal a partir de <code>desktop-v3/</code>:<br />
+      <code style="color: #85d0ff;">npx @tauri-apps/cli icon ~/Downloads/elomax-icon.png</code>
+    </p>
+
+    <script type="module">
+      const SOURCE = '../src/assets/elomax-logo.png'
+      const SIZE = 1024
+      const PREVIEW_SIZES = [256, 128, 64, 32]
+
+      const $ = (id) => document.getElementById(id)
+      const bgInput = $('bg')
+      const fgInput = $('fg')
+      const paddingInput = $('padding')
+      const paddingLabel = $('padding-label')
+      const glowInput = $('glow')
+      const glowLabel = $('glow-label')
+      const gradientInput = $('gradient')
+      const downloadBtn = $('download')
+      const previewEl = $('preview')
+
+      const logo = new Image()
+      logo.crossOrigin = 'anonymous'
+      logo.src = SOURCE
+
+      // Hidden canvas where we generate at the full 1024px resolution.
+      const master = document.createElement('canvas')
+      master.width = SIZE
+      master.height = SIZE
+
+      const previews = PREVIEW_SIZES.map((s) => {
+        const wrap = document.createElement('div')
+        const canvas = document.createElement('canvas')
+        canvas.width = s
+        canvas.height = s
+        canvas.className = 'preview-img'
+        const label = document.createElement('span')
+        label.textContent = `${s}px`
+        wrap.append(canvas, label)
+        previewEl.append(wrap)
+        return canvas
+      })
+
+      // Pre-tint the logo: convert greyscale art to the picked foreground colour.
+      // Done by drawing logo to an off-screen canvas, then `globalCompositeOperation = 'source-in'`
+      // with the desired colour painted across the bitmap.
+      const tintLogo = (color) => {
+        const c = document.createElement('canvas')
+        c.width = logo.naturalWidth
+        c.height = logo.naturalHeight
+        const cx = c.getContext('2d')
+        cx.drawImage(logo, 0, 0)
+        cx.globalCompositeOperation = 'source-in'
+        cx.fillStyle = color
+        cx.fillRect(0, 0, c.width, c.height)
+        return c
+      }
+
+      const render = () => {
+        const bg = bgInput.value
+        const fg = fgInput.value
+        const padding = Number(paddingInput.value)
+        const glow = Number(glowInput.value)
+        const useGradient = gradientInput.checked
+
+        paddingLabel.textContent = `${padding}%`
+        glowLabel.textContent = String(glow)
+
+        const ctx = master.getContext('2d')
+        ctx.clearRect(0, 0, SIZE, SIZE)
+
+        // Circular background.
+        ctx.save()
+        ctx.beginPath()
+        ctx.arc(SIZE / 2, SIZE / 2, SIZE / 2, 0, Math.PI * 2)
+        ctx.clip()
+        if (useGradient) {
+          const grad = ctx.createLinearGradient(0, 0, SIZE, SIZE)
+          grad.addColorStop(0, lighten(bg, 0.18))
+          grad.addColorStop(1, darken(bg, 0.18))
+          ctx.fillStyle = grad
+        } else {
+          ctx.fillStyle = bg
+        }
+        ctx.fillRect(0, 0, SIZE, SIZE)
+
+        // Subtle inner border for depth.
+        ctx.lineWidth = 6
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)'
+        ctx.beginPath()
+        ctx.arc(SIZE / 2, SIZE / 2, SIZE / 2 - 3, 0, Math.PI * 2)
+        ctx.stroke()
+
+        // Tinted logo, centered with `padding` % from the circle's edge.
+        if (logo.complete && logo.naturalWidth > 0) {
+          const tinted = tintLogo(fg)
+          const logoArea = SIZE * (1 - padding / 50) // padding is per-side %
+          const x = (SIZE - logoArea) / 2
+          const y = (SIZE - logoArea) / 2
+
+          if (glow > 0) {
+            ctx.shadowColor = fg
+            ctx.shadowBlur = glow
+          }
+          ctx.drawImage(tinted, x, y, logoArea, logoArea)
+          ctx.shadowBlur = 0
+        }
+        ctx.restore()
+
+        // Push to all preview canvases.
+        for (const c of previews) {
+          const pctx = c.getContext('2d')
+          pctx.imageSmoothingEnabled = true
+          pctx.imageSmoothingQuality = 'high'
+          pctx.clearRect(0, 0, c.width, c.height)
+          pctx.drawImage(master, 0, 0, c.width, c.height)
+        }
+      }
+
+      // Quick lighten/darken helpers (RGB linear blend toward white/black).
+      const lighten = (hex, amt) => mix(hex, '#ffffff', amt)
+      const darken = (hex, amt) => mix(hex, '#000000', amt)
+      const mix = (a, b, t) => {
+        const [r1, g1, b1] = parseHex(a)
+        const [r2, g2, b2] = parseHex(b)
+        const r = Math.round(r1 + (r2 - r1) * t)
+        const g = Math.round(g1 + (g2 - g1) * t)
+        const bb = Math.round(b1 + (b2 - b1) * t)
+        return `rgb(${r},${g},${bb})`
+      }
+      const parseHex = (hex) => {
+        const v = hex.replace('#', '')
+        return [parseInt(v.slice(0, 2), 16), parseInt(v.slice(2, 4), 16), parseInt(v.slice(4, 6), 16)]
+      }
+
+      for (const el of [bgInput, fgInput, paddingInput, glowInput, gradientInput]) {
+        el.addEventListener('input', render)
+      }
+      logo.addEventListener('load', render)
+      logo.addEventListener('error', () => {
+        alert(`Não consegui carregar ${SOURCE}. Abra este arquivo a partir de desktop-v3/scripts/.`)
+      })
+
+      downloadBtn.addEventListener('click', () => {
+        master.toBlob((blob) => {
+          const a = document.createElement('a')
+          a.href = URL.createObjectURL(blob)
+          a.download = 'elomax-icon.png'
+          a.click()
+        }, 'image/png')
+      })
+    </script>
+  </body>
+</html>
