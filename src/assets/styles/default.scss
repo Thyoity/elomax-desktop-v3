@@ -60,6 +60,7 @@ select {
 // teleported out of the component tree by `<ModalsContainer />`, so `:deep()`
 // selectors don't reach it.
 .modal-content--logout { max-width: 420px; }
+.modal-content--update { max-width: 440px; }
 .modal-content--extras { max-width: 520px; }
 .modal-content--extras-agents { max-width: 520px; max-height: 480px; }
 mark {

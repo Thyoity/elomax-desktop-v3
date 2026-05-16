@@ -37,6 +37,7 @@ declare module 'vue' {
     ServiceRealtimeHelper: typeof import('./components/ServicesRealtimeHelper/ServiceRealtimeHelper.vue')['default']
     ServicesQueueDropdown: typeof import('./components/ServicesQueueDropdown.vue')['default']
     ServicesRealtimeHelper: typeof import('./components/ServicesRealtimeHelper/ServicesRealtimeHelper.vue')['default']
+    UpdateAvailableModal: typeof import('./components/modals/UpdateAvailableModal.vue')['default']
     Updates: typeof import('./components/Updates.vue')['default']
   }
 }

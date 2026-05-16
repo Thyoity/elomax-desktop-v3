@@ -23,11 +23,13 @@ const isTauriRuntime: boolean =
 
 const SYNTHETIC_SET: ReadonlySet<string> = new Set(Object.values(SYNTHETIC_CHANNELS))
 
-// Held between `ready-for-update-check` (which downloads) and `install-update`
-// (which installs + relaunches) so the user-confirmed install step has access
-// to the same Update handle the download was performed on. Only one update
-// can be pending at a time — newer checks overwrite this reference.
-let pendingUpdate: { install: () => Promise<void> } | null = null
+// Held across the three update steps (check → download → install) so each
+// step operates on the same Update handle. Only one update can be pending
+// at a time — newer `ready-for-update-check` calls overwrite this reference.
+let pendingUpdate: {
+  install: () => Promise<void>
+  download?: (cb: (e: any) => void) => Promise<void>
+} | null = null
 
 const isSyntheticChannel = (channel: string): boolean => SYNTHETIC_SET.has(channel)
 
@@ -88,29 +90,25 @@ const SEND_HANDLERS: Record<string, SendHandler> = {
     }
   },
   'ready-for-update-check': (_arg, { bridge }) => {
-    // Auto-update flow via `@tauri-apps/plugin-updater`, mapped onto the
-    // legacy synthetic event channels so the existing UI in App.vue works:
-    //   - `checking-for-update`         emitted while `check()` is running
-    //   - `update-not-available`        no newer version, or browser-only run
-    //   - `update-available`            new version found; download starting
-    //   - `update-download-progress`    chunk arrived (bytes transferred/total)
-    //   - `update-downloaded`           download finished, ready to install
-    //   - `update-error`                any failure — UI should not block the user
+    // Three-step auto-update flow, each step gated on user confirmation:
+    //   1. `ready-for-update-check`  → checks the server, emits
+    //      `update-available` (with version/notes) if there's a newer build.
+    //      Does NOT download yet — the renderer pops a modal first asking
+    //      the user whether to proceed.
+    //   2. `start-update-download`   → user confirmed; bridge calls
+    //      `update.download()` and reports progress until `update-downloaded`.
+    //   3. `install-update`          → user clicked "Reiniciar e instalar";
+    //      bridge calls `update.install()` (this is what fires NSIS) and
+    //      `cleanup_and_relaunch` to swap to the new binary.
     //
-    // IMPORTANT: download() and install() are deliberately split. Calling
-    // downloadAndInstall() runs the NSIS installer as soon as the bytes
-    // arrive, and NSIS force-kills the running process during install —
-    // so an auto-check in the background would look like a silent crash
-    // to the user. By stopping after download, we hold the new bundle in
-    // memory until the user explicitly clicks "Reiniciar e instalar",
-    // and only then dispatch `install-update` (below) to run the install
-    // + relaunch. The UI shows a graceful "Ready" state in between.
+    // Splitting check → download → install means a periodic background
+    // check never surprises the user with a download or a force-kill from
+    // the NSIS installer. The user must say yes twice (download + install).
     if (!isTauriRuntime) {
       setTimeout(() => bridge.emitSynthetic(SYNTHETIC_CHANNELS.updateNotAvailable, null), 0)
       return
     }
     void (async () => {
-      bridge.emitSynthetic(SYNTHETIC_CHANNELS.checkingForUpdate, null)
       try {
         const { check } = await import('@tauri-apps/plugin-updater')
         const update = await check()
@@ -118,14 +116,33 @@ const SEND_HANDLERS: Record<string, SendHandler> = {
           bridge.emitSynthetic(SYNTHETIC_CHANNELS.updateNotAvailable, null)
           return
         }
+        // Save the Update handle for the later download/install steps and
+        // signal the renderer with version info so it can prompt the user.
+        pendingUpdate = update
         bridge.emitSynthetic(SYNTHETIC_CHANNELS.updateAvailable, {
           version: update.version,
           notes: update.body,
         })
-
+      } catch (err) {
+        bridge.emitSynthetic(SYNTHETIC_CHANNELS.updateError, {
+          message: err instanceof Error ? err.message : String(err),
+        })
+        bridge.emitSynthetic(SYNTHETIC_CHANNELS.updateNotAvailable, null)
+      }
+    })()
+  },
+  'start-update-download': (_arg, { bridge }) => {
+    // Step 2 of the auto-update flow — called after the user confirms the
+    // "update available" modal. Downloads the bundle into the updater's
+    // temp dir and emits progress events the AppUpdates full-screen UI
+    // already listens for. Does NOT install; that's gated on a separate
+    // user click on the "Reiniciar e instalar" button (`install-update`).
+    if (!isTauriRuntime || !pendingUpdate || !pendingUpdate.download) return
+    void (async () => {
+      try {
         let contentLength = 0
         let downloaded = 0
-        await update.download((event) => {
+        await pendingUpdate.download!((event: any) => {
           if (event.event === 'Started') {
             contentLength = event.data.contentLength ?? 0
             bridge.emitSynthetic(SYNTHETIC_CHANNELS.updateDownloadProgress, {
@@ -142,13 +159,6 @@ const SEND_HANDLERS: Record<string, SendHandler> = {
             bridge.emitSynthetic(SYNTHETIC_CHANNELS.updateDownloaded, null)
           }
         })
-
-        // Hold the Update handle alive until `install-update` fires so we
-        // can run the install + relaunch in response to a user click.
-        // Stored on a module-scope variable rather than passing through
-        // the bridge for simplicity — only one update can be pending at
-        // a time anyway.
-        pendingUpdate = update
       } catch (err) {
         bridge.emitSynthetic(SYNTHETIC_CHANNELS.updateError, {
           message: err instanceof Error ? err.message : String(err),

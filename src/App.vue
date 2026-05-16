@@ -83,6 +83,7 @@ import { useModal } from 'vue-final-modal'
 import { mapState, mapMutations } from '@/stores/compat'
 import LoLAccountDTO from '@/dtos/lol-account'
 import LogoutConfirmModal from '@/components/modals/LogoutConfirmModal.vue'
+import UpdateAvailableModal from '@/components/modals/UpdateAvailableModal.vue'
 import { suppressTippy } from '@/plugins/tippy-helpers'
 
 export default {
@@ -97,6 +98,9 @@ export default {
       // bridge channel the startup boot uses — `AppUpdates` then takes
       // over the whole UI as soon as `isCheckingForUpdates` flips true.
       updateCheckInterval: null,
+      // Tracks whether the "update available" confirmation modal is currently
+      // open, so the 10-minute check doesn't stack a second modal on top.
+      updateModalOpen: false,
     }
   },
   computed: {
@@ -170,9 +174,34 @@ export default {
     onCheckingForUpdate() {
       this.SET_IS_CHECKING_FOR_UPDATES(true)
     },
-    onUpdateAvailable() {
+    onUpdateAvailable(_event, payload) {
+      // The bridge has CHECKED for an update but hasn't started downloading
+      // yet — that's the user's call. Pop a modal asking permission; only
+      // on confirm do we tell the bridge to start the download (which then
+      // flips `hasNewRelease` on, taking the full-screen AppUpdates over).
+      // Dismissing the modal does nothing extra — the 10-minute interval
+      // re-runs the check, so we'll ask again next cycle.
       this.SET_IS_CHECKING_FOR_UPDATES(false)
-      this.SET_HAS_NEW_RELEASE(true)
+      this.SET_HAS_NEW_RELEASE(false)
+      if (this.updateModalOpen) return
+      this.updateModalOpen = true
+      const modal = useModal({
+        component: UpdateAvailableModal,
+        attrs: {
+          version: payload?.version ?? null,
+          onConfirm: () => {
+            this.SET_HAS_NEW_RELEASE(true)
+            this.$bridge.send('start-update-download')
+            modal.close()
+          },
+          onCancel: () => modal.close(),
+          onClosed: () => {
+            this.updateModalOpen = false
+            modal.destroy()
+          },
+        },
+      })
+      modal.open()
     },
     onUpdateNotAvailable() {
       this.SET_IS_CHECKING_FOR_UPDATES(false)
