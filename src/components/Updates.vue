@@ -38,13 +38,10 @@
 
         <!-- 3. Pronto pra instalar -->
         <div v-else-if="state === 'ready'" key="ready" class="updates__panel">
-          <div class="updates__check">
-            <ion-icon name="checkmark-circle" />
-          </div>
           <h2 class="updates__title">Atualização pronta</h2>
-          <p class="updates__hint">Reinicie pra aplicar a nova versão.</p>
+          <p v-if="updateVersion" class="updates__hint">v{{ appVersion }} &gt; v{{ updateVersion }}</p>
           <button class="updates__button" type="button" @click="onInstallUpdate">
-            Reiniciar e instalar
+            Instalar agora
           </button>
         </div>
       </Transition>
@@ -64,6 +61,7 @@ export default {
   },
   computed: {
     ...mapState([
+      'appVersion',
       'isCheckingForUpdates',
       'hasNewRelease',
       'isUpdateReadyToInstall',
