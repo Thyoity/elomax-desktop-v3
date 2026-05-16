@@ -119,6 +119,8 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+@use 'sass:color';
+
 $accent: #85d0ff;
 
 .updates {
@@ -265,7 +267,7 @@ $accent: #85d0ff;
     transition: background-color 0.18s ease, transform 0.12s ease, box-shadow 0.18s ease;
 
     &:hover {
-      background: lighten($accent, 5%);
+      background: color.adjust($accent, $lightness: 5%);
       transform: translateY(-1px);
       box-shadow: 0 8px 20px rgba(133, 208, 255, 0.35);
     }

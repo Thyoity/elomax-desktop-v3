@@ -12,7 +12,8 @@
     "tauri:build": "tauri build",
     "release": "node scripts/release.mjs",
     "release:minor": "node scripts/release.mjs minor",
-    "release:major": "node scripts/release.mjs major"
+    "release:major": "node scripts/release.mjs major",
+    "postinstall": "node scripts/sync-ionicons.mjs"
   },
   "dependencies": {
     "@chenfengyuan/vue-countdown": "^2.1.2",
@@ -47,6 +48,7 @@
     "@types/howler": "^2.2.12",
     "@types/lodash-es": "^4.17.12",
     "@vitejs/plugin-vue": "^5.2.1",
+    "ionicons": "^5.5.2",
     "sass": "^1.83.0",
     "typescript": "~6.0.3",
     "unplugin-vue-components": "^28.0.0",
