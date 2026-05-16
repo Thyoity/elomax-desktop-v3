@@ -144,16 +144,15 @@ const SEND_HANDLERS: Record<string, SendHandler> = {
   'install-update': () => {
     // `downloadAndInstall` above already installed the new binary; we just
     // need to relaunch the process so Windows picks it up.
+    //
+    // We invoke the custom `cleanup_and_relaunch` Tauri command instead of
+    // plugin-process's `relaunch()`, because the latter exits the process
+    // too fast for `TrayIcon`'s Drop impl to run — leaving a phantom icon
+    // in the Windows shell tray that lives next to the new process's icon
+    // until the user hovers over it. `cleanup_and_relaunch` explicitly
+    // removes the tray (NIM_DELETE on Windows) before restarting.
     if (!isTauriRuntime) return
-    void (async () => {
-      try {
-        const { relaunch } = await import('@tauri-apps/plugin-process')
-        await relaunch()
-      } catch {
-        // Nothing useful to do here — the new version is installed and will
-        // be picked up next time the user opens the app manually.
-      }
-    })()
+    void invoke('cleanup_and_relaunch').catch(() => undefined)
   },
 }
 

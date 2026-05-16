@@ -75,6 +75,21 @@ fn flash_window(app: AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+/// Cleanly removes the tray icon and then relaunches the app. Called by the
+/// updater flow right before the new binary takes over — relying only on the
+/// default `relaunch()` left a ghost tray icon behind because the process was
+/// torn down too fast for `TrayIcon`'s Drop (which invokes Windows's
+/// `Shell_NotifyIcon NIM_DELETE`) to run.
+#[tauri::command]
+fn cleanup_and_relaunch(app: AppHandle) -> Result<(), String> {
+    // Explicitly remove the tray icon we registered in `setup`. `remove_by_id`
+    // is the public API equivalent of dropping the handle — it triggers the
+    // NIM_DELETE on Windows synchronously, so the icon is gone from the shell
+    // tray before we spawn the new process.
+    let _ = app.remove_tray_by_id("main");
+    app.restart();
+}
+
 /// Shows the main window if it's hidden and focuses it.
 fn show_main_window(app: &AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
@@ -98,6 +113,7 @@ pub fn run() {
             lol_get_request,
             lol_gather_account_data,
             flash_window,
+            cleanup_and_relaunch,
         ])
         .setup(|app| {
             // System tray: clicking the main window's close button hides it
