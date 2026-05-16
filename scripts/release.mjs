@@ -37,6 +37,7 @@ const repoRoot = resolve(__dirname, '..')
 
 const PKG_PATH = resolve(repoRoot, 'package.json')
 const TAURI_PATH = resolve(repoRoot, 'src-tauri', 'tauri.conf.json')
+const CARGO_PATH = resolve(repoRoot, 'src-tauri', 'Cargo.toml')
 
 const run = (cmd, opts = {}) => {
   console.log(`> ${cmd}`)
@@ -80,6 +81,7 @@ if (status) {
 // ----- 1. Compute next version. -------------------------------------------
 const pkg = readJson(PKG_PATH)
 const tauri = readJson(TAURI_PATH)
+const cargoSrc = readFileSync(CARGO_PATH, 'utf8')
 
 const currentVersion = pkg.version
 const nextVersion = bump(currentVersion, bumpKind)
@@ -98,8 +100,18 @@ tauri.version = nextVersion
 writeJson(PKG_PATH, pkg)
 writeJson(TAURI_PATH, tauri)
 
+// Cargo.toml: replace only the first `version = "x.y.z"` line at the top of
+// the `[package]` table. We avoid a full TOML parser here because nothing
+// else in this script needs one and the format is regular.
+const cargoUpdated = cargoSrc.replace(/^version = "\d+\.\d+\.\d+"$/m, `version = "${nextVersion}"`)
+if (cargoUpdated === cargoSrc) {
+  console.error('Failed to locate `version = "..."` line in src-tauri/Cargo.toml')
+  process.exit(1)
+}
+writeFileSync(CARGO_PATH, cargoUpdated)
+
 // ----- 3. Commit + tag + push. --------------------------------------------
-runInherit('git add package.json src-tauri/tauri.conf.json')
+runInherit('git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml')
 runInherit(`git commit -m "chore: release v${nextVersion}"`)
 runInherit(`git tag -a v${nextVersion} -m "v${nextVersion}"`)
 runInherit('git push')

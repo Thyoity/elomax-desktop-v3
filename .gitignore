@@ -13,3 +13,10 @@ src-tauri/gen
 .env
 .env.local
 .env.*.local
+
+# Tauri signing keys — must NEVER be committed. The literal `~/` folder
+# below is a Windows artifact: `npx tauri signer generate -w ~/.tauri/...`
+# doesn't expand `~` on Windows and creates the dir relative to the repo.
+~/
+*.key
+*.key.pub
