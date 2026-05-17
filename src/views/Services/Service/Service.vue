@@ -1031,9 +1031,7 @@ export default {
         tftWinBoost ||
         tftPass;
 
-      if (service) {
-        this.service = service;
-      } else {
+      try {
         const { data } = await axios.get(
           `${API_BASE_URL}/services/${serviceId}`,
           {
@@ -1053,13 +1051,30 @@ export default {
         }
         this.SET_TEMP_SERVICE({
           service: data.data,
-          onLoad(service) {
-            this.service = service;
+          onLoad: (loadedService) => {
+            this.service = loadedService;
+            if (!this.service && service) this.service = service;
+            if (
+              this.service &&
+              this.service.details &&
+              this.service.details.account
+            )
+              this.setAccountForm();
           },
         });
+      } catch {
+        if (service) {
+          this.service = service;
+          if (this.service?.details?.account) this.setAccountForm();
+        } else {
+          this.$toast.error(
+            "Erro ao adquirir as informações do serviço.",
+            "Ops",
+            { position: "topCenter" },
+          );
+          this.$router.replace("/").catch(() => {});
+        }
       }
-      if (this.service && this.service.details && this.service.details.account)
-        this.setAccountForm();
     },
     changeTab(tab) {
       const serviceId = parseInt(this.$route.params.id);

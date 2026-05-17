@@ -126,13 +126,11 @@ export const useServicesStore = defineStore('services', {
       _assign(s, { client: { ...s.client, isOnline } })
     },
     ADD_SERVICE_CHAT_ITEM({ service, chatItem }: { service: any; chatItem: any }) {
-      if (service.isTemp && this.tempService) {
+      if (this.tempService && this.tempService.id === service.id) {
         this.tempService.chatItems.push(chatItem)
-        return
       }
       const s = findServiceInState(this.$state, service)
-      if (!s) return
-      s.chatItems.push(chatItem)
+      if (s) s.chatItems.push(chatItem)
     },
     FINISH_SERVICE({
       service,
