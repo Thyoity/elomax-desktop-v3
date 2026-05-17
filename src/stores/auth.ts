@@ -23,11 +23,11 @@ export const useAuthStore = defineStore('auth', {
     user: null,
   }),
   actions: {
-    AUTHENTICATE({ token, user }: { token: string; user: User }) {
+    authenticate({ token, user }: { token: string; user: User }) {
       this.token = token
       this.user = user
     },
-    SET_USER(rawUser: any) {
+    setUser(rawUser: any) {
       this.user = {
         id: parseInt(rawUser.id),
         credit: rawUser.credit,
@@ -40,10 +40,10 @@ export const useAuthStore = defineStore('auth', {
         dateCreated: rawUser.dateCreated,
       }
     },
-    UPDATE_USER_CREDIT(credit: any) {
+    updateUserCredit(credit: any) {
       if (this.user) this.user.credit = credit
     },
-    LOGOUT() {
+    logout() {
       this.token = null
       this.user = null
     },

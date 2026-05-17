@@ -88,7 +88,7 @@ export default {
     },
   },
   methods: {
-    ...mapMutations(['SET_IS_CHECKING_FOR_UPDATES', 'SET_HAS_NEW_RELEASE']),
+    ...mapMutations(['setIsCheckingForUpdates', 'setHasNewRelease']),
     onInstallUpdate() {
       // Bridge handler triggers `relaunch()` on the Tauri side. After that
       // returns, the app process is replaced so we don't need to do anything

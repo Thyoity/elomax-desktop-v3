@@ -116,12 +116,12 @@ export default {
     },
   },
   methods: {
-    ...mapMutations(['SET_UPDATE_DOWNLOAD_STATUS', 'SET_IS_CHECKING_FOR_UPDATES', 'SET_HAS_NEW_RELEASE', 'SET_UPDATE_READY_TO_INSTALL', 'SET_OPEN_DROPDOWN_MENU']),
-    ...mapMutations('lol', ['SET_CONNECTION_DATA', 'SET_IS_LOL_AUTHENTICATED', 'SET_SUMMONER_NAME', 'SET_IMPORTED_DATA']),
-    ...mapMutations('auth', ['LOGOUT']),
-    ...mapMutations('services', ['RESET_SERVICES_MODULE']),
-    ...mapMutations('services-queue', ['RESET_SERVICES_QUEUE_MODULE']),
-    ...mapMutations('notifications', ['RESET_NOTIFICATIONS_MODULE']),
+    ...mapMutations(['setUpdateDownloadStatus', 'setIsCheckingForUpdates', 'setHasNewRelease', 'setUpdateReadyToInstall', 'setOpenDropdownMenu']),
+    ...mapMutations('lol', ['setConnectionData', 'setIsLolAuthenticated', 'setSummonerName', 'setImportedData']),
+    ...mapMutations('auth', ['logout']),
+    ...mapMutations('services', ['resetServicesModule']),
+    ...mapMutations('services-queue', ['resetServicesQueueModule']),
+    ...mapMutations('notifications', ['resetNotificationsModule']),
     openExternalSite() {
       this.$bridge.send('new-window', `${WEB_BASE_URL}/v2/br`)
     },
@@ -134,13 +134,13 @@ export default {
       const summoner = result?.data
       const summonerName = summoner?.gameName || summoner?.displayName
       if (result?.success && summonerName) {
-        this.SET_CONNECTION_DATA(result.connectionData)
-        this.SET_IS_LOL_AUTHENTICATED(true)
-        this.SET_SUMMONER_NAME(summonerName)
+        this.setConnectionData(result.connectionData)
+        this.setIsLolAuthenticated(true)
+        this.setSummonerName(summonerName)
       } else {
-        this.SET_CONNECTION_DATA(null)
-        this.SET_IS_LOL_AUTHENTICATED(false)
-        this.SET_SUMMONER_NAME(null)
+        this.setConnectionData(null)
+        this.setIsLolAuthenticated(false)
+        this.setSummonerName(null)
       }
     },
     onLoLReadyCheck() {
@@ -166,13 +166,13 @@ export default {
             )
           }
         })
-        this.SET_IMPORTED_DATA(finalResult)
+        this.setImportedData(finalResult)
       } catch {
-        this.SET_IMPORTED_DATA(null)
+        this.setImportedData(null)
       }
     },
     onCheckingForUpdate() {
-      this.SET_IS_CHECKING_FOR_UPDATES(true)
+      this.setIsCheckingForUpdates(true)
     },
     onUpdateAvailable(_event, payload) {
       // The bridge has CHECKED for an update but hasn't started downloading
@@ -181,8 +181,8 @@ export default {
       // flips `hasNewRelease` on, taking the full-screen AppUpdates over).
       // Dismissing the modal does nothing extra — the 10-minute interval
       // re-runs the check, so we'll ask again next cycle.
-      this.SET_IS_CHECKING_FOR_UPDATES(false)
-      this.SET_HAS_NEW_RELEASE(false)
+      this.setIsCheckingForUpdates(false)
+      this.setHasNewRelease(false)
       if (this.updateModalOpen) return
       this.updateModalOpen = true
       const modal = useModal({
@@ -190,7 +190,7 @@ export default {
         attrs: {
           version: payload?.version ?? null,
           onConfirm: () => {
-            this.SET_HAS_NEW_RELEASE(true)
+            this.setHasNewRelease(true)
             this.$bridge.send('start-update-download')
             modal.close()
           },
@@ -204,29 +204,29 @@ export default {
       modal.open()
     },
     onUpdateNotAvailable() {
-      this.SET_IS_CHECKING_FOR_UPDATES(false)
-      this.SET_HAS_NEW_RELEASE(false)
+      this.setIsCheckingForUpdates(false)
+      this.setHasNewRelease(false)
     },
     onUpdateDownloadProgress(_event, data) {
-      this.SET_IS_CHECKING_FOR_UPDATES(false)
-      this.SET_UPDATE_DOWNLOAD_STATUS(data)
-      this.SET_HAS_NEW_RELEASE(false)
+      this.setIsCheckingForUpdates(false)
+      this.setUpdateDownloadStatus(data)
+      this.setHasNewRelease(false)
     },
     onUpdateDownloaded() {
-      this.SET_IS_CHECKING_FOR_UPDATES(false)
-      this.SET_HAS_NEW_RELEASE(false)
-      this.SET_UPDATE_READY_TO_INSTALL()
+      this.setIsCheckingForUpdates(false)
+      this.setHasNewRelease(false)
+      this.setUpdateReadyToInstall()
     },
     onDevModeSignal() {
-      this.SET_IS_CHECKING_FOR_UPDATES(false)
-      this.SET_HAS_NEW_RELEASE(false)
+      this.setIsCheckingForUpdates(false)
+      this.setHasNewRelease(false)
     },
     // Closes the side drawer. Wired on every non-trigger top-level nav link
     // so navigating away (e.g., Início → Configurações) dismisses the drawer
     // even when the click is on the same route the user is already on (the
     // route watcher in AppMenuDrawer doesn't fire in that case).
     closeDropdownMenu() {
-      this.SET_OPEN_DROPDOWN_MENU(null)
+      this.setOpenDropdownMenu(null)
     },
     onLogoutButtonClick(event) {
       // Confirmation gate — clicking the logout icon by mistake forces a
@@ -238,10 +238,10 @@ export default {
         component: LogoutConfirmModal,
         attrs: {
           onConfirm: () => {
-            this.RESET_SERVICES_MODULE()
-            this.RESET_SERVICES_QUEUE_MODULE()
-            this.RESET_NOTIFICATIONS_MODULE()
-            this.LOGOUT()
+            this.resetServicesModule()
+            this.resetServicesQueueModule()
+            this.resetNotificationsModule()
+            this.logout()
             modal.close()
           },
           onCancel: () => modal.close(),

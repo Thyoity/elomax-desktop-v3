@@ -63,38 +63,38 @@ export const useAppStore = defineStore('app', {
     setImportedData(data: any) {
       this.importedData = data
     },
-    SET_IS_CHECKING_FOR_UPDATES(value: boolean) {
+    setIsCheckingForUpdates(value: boolean) {
       this.isCheckingForUpdates = value
     },
-    SET_HAS_NEW_RELEASE(value: boolean) {
+    setHasNewRelease(value: boolean) {
       this.hasNewRelease = value
     },
-    SET_UPDATE_DOWNLOAD_STATUS(value: State['updateDownloadStatus']) {
+    setUpdateDownloadStatus(value: State['updateDownloadStatus']) {
       this.updateDownloadStatus = value
     },
-    SET_UPDATE_READY_TO_INSTALL() {
+    setUpdateReadyToInstall() {
       this.isUpdateReadyToInstall = true
     },
-    SET_CURRENT_SERVICE({ serviceId, tab }: { serviceId: any; tab: any }) {
+    setCurrentService({ serviceId, tab }: { serviceId: any; tab: any }) {
       this.currentServiceId = serviceId
       this.currentServiceTab = tab
     },
-    SET_OPEN_DROPDOWN_MENU(name: any) {
+    setOpenDropdownMenu(name: any) {
       this.openDropdownMenu = name
     },
-    INCREMENT_DROPDOWN_MENU_INDEX() {
+    incrementDropdownMenuIndex() {
       this.dropdownMenuIndex += 1
     },
-    SET_SERVICE_NOTIFICATION_SOUND(i: any) {
+    setServiceNotificationSound(i: any) {
       this.serviceNotificationSound = i
     },
-    SET_SERVICE_NOTIFICATION_SOUNDS(obj: { n1: any; n2: any }) {
+    setServiceNotificationSounds(obj: { n1: any; n2: any }) {
       this.serviceNotificationSounds = obj
     },
-    SET_CHAT_MESSAGE_SOUND(i: any) {
+    setChatMessageSound(i: any) {
       this.chatMessageSound = i
     },
-    SET_NOTIFICATION_SOUND(i: any) {
+    setNotificationSound(i: any) {
       this.notificationSound = i
     },
   },

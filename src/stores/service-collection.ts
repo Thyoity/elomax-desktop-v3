@@ -44,16 +44,16 @@ export const SERVICE_BUCKETS = Object.values(SERVICE_TYPE_TO_BUCKET) as ServiceB
 const DUO_TYPES: ServiceType[] = ['duoBoost', 'valorantDuoBoost', 'wildRiftDuoBoost']
 
 export const ACTION_ALLOWED_TYPES = {
-  SET_SERVICE_ACCOUNT: ['eloBoost'] as ServiceType[],
+  setServiceAccount: ['eloBoost'] as ServiceType[],
   // Duo services don't expose an account because the client plays alongside the booster.
-  SET_SERVICE_ACCOUNT_STATUS: SERVICE_TYPES.filter((t) => !DUO_TYPES.includes(t)),
-  SET_SERVICE_VICTORIES_DEFEATS: [
+  setServiceAccountStatus: SERVICE_TYPES.filter((t) => !DUO_TYPES.includes(t)),
+  setServiceVictoriesDefeats: [
     'placement',
     'valorantPlacement',
     'wildRiftPlacement',
     'tftPlacement',
   ] as ServiceType[],
-  SET_SERVICE_CURRENT_VICTORIES: [
+  setServiceCurrentVictories: [
     'winBoost',
     'duoBoost',
     'valorantWinBoost',
@@ -62,7 +62,7 @@ export const ACTION_ALLOWED_TYPES = {
     'wildRiftDuoBoost',
     'tftWinBoost',
   ] as ServiceType[],
-  SET_SERVICE_CURRENT_CLASS_COUNT: ['coaching'] as ServiceType[],
+  setServiceCurrentClassCount: ['coaching'] as ServiceType[],
 } as const
 
 export type RestrictedAction = keyof typeof ACTION_ALLOWED_TYPES

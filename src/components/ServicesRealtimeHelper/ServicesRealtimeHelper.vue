@@ -76,8 +76,8 @@ export default {
     }
   },
   methods: {
-    ...mapMutations('notifications', ['ADD_NOTIFICATION', 'REMOVE_SERVICE_NOTIFICATIONS']),
-    ...mapMutations('auth', ['UPDATE_USER_CREDIT']),
+    ...mapMutations('notifications', ['addNotification', 'removeServiceNotifications']),
+    ...mapMutations('auth', ['updateUserCredit']),
     isCurrentUser(id) {
       return parseInt(id) === parseInt(this.user.id)
     },
@@ -107,7 +107,7 @@ export default {
         this.currentServiceId === relatedServiceId && this.currentServiceTab === 'chat'
       if (isOnOpenChat) return
 
-      this.ADD_NOTIFICATION({
+      this.addNotification({
         relatedServiceId,
         client: data.user,
         notification: data,
@@ -116,11 +116,11 @@ export default {
     })
 
     privateUser.bind(pusherEvents.creditUpdate, (data) => {
-      this.UPDATE_USER_CREDIT(data)
+      this.updateUserCredit(data)
     })
 
     privateUser.bind(pusherEvents.readServiceNotifications, (data) => {
-      this.REMOVE_SERVICE_NOTIFICATIONS(parseInt(data))
+      this.removeServiceNotifications(parseInt(data))
     })
 
     const servicesQueue = this.$pusher.subscribe(pusherChannel.servicesQueue)

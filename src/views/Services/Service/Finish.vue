@@ -75,7 +75,7 @@ export default {
     }
   },
   methods: {
-    ...mapMutations('services', ['FINISH_SERVICE']),
+    ...mapMutations('services', ['finishService']),
     reset() {
       this.formData = null
       this.currentStatus = STATUS_INITIAL;
@@ -94,7 +94,7 @@ export default {
           dateFinished: data.data.date_finished,
           screenshot: data.data.screenshot
         })
-        this.FINISH_SERVICE({
+        this.finishService({
           service: this.service,
           dateFinished: data.data.date_finished,
           screenshot: data.data.screenshot

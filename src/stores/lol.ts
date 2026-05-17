@@ -15,16 +15,16 @@ export const useLolStore = defineStore('lol', {
     importedData: null,
   }),
   actions: {
-    SET_IS_LOL_AUTHENTICATED(value: boolean) {
+    setIsLolAuthenticated(value: boolean) {
       this.isLoLAuthenticated = value
     },
-    SET_SUMMONER_NAME(value: string | null) {
+    setSummonerName(value: string | null) {
       this.summonerName = value
     },
-    SET_CONNECTION_DATA(value: { password: string; port: number } | null) {
+    setConnectionData(value: { password: string; port: number } | null) {
       this.connectionData = value
     },
-    SET_IMPORTED_DATA(value: any) {
+    setImportedData(value: any) {
       this.importedData = value
     },
   },

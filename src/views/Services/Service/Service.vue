@@ -928,15 +928,15 @@ export default {
     },
   },
   methods: {
-    ...mapMutations(["SET_CURRENT_SERVICE"]),
+    ...mapMutations(["setCurrentService"]),
     ...mapMutations("services", [
-      "SET_TEMP_SERVICE",
-      "RESET_TEMP_SERVICE",
-      "SET_SERVICE_ACCOUNT",
-      "SET_SERVICE_ACCOUNT_STATUS",
-      "SET_SERVICE_CURRENT_VICTORIES",
-      "SET_SERVICE_CURRENT_CLASS_COUNT",
-      "SET_SERVICE_VICTORIES_DEFEATS",
+      "setTempService",
+      "resetTempService",
+      "setServiceAccount",
+      "setServiceAccountStatus",
+      "setServiceCurrentVictories",
+      "setServiceCurrentClassCount",
+      "setServiceVictoriesDefeats",
     ]),
     setAccountForm() {
       this.account.account =
@@ -1049,7 +1049,7 @@ export default {
           this.$router.replace("/").catch(() => {});
           return;
         }
-        this.SET_TEMP_SERVICE({
+        this.setTempService({
           service: data.data,
           onLoad: (loadedService) => {
             this.service = loadedService;
@@ -1079,7 +1079,7 @@ export default {
     changeTab(tab) {
       const serviceId = parseInt(this.$route.params.id);
       this.activeTab = tab;
-      this.SET_CURRENT_SERVICE({
+      this.setCurrentService({
         serviceId: serviceId,
         tab: tab,
       });
@@ -1101,7 +1101,7 @@ export default {
         );
       } catch (err) {}
 
-      this.SET_SERVICE_ACCOUNT({
+      this.setServiceAccount({
         service: this.service,
         account: this.account,
       });
@@ -1134,7 +1134,7 @@ export default {
             headers: { Authorization: `Bearer ${this.token}` },
           }
         );
-        this.SET_SERVICE_VICTORIES_DEFEATS({
+        this.setServiceVictoriesDefeats({
           service: this.service,
           operation,
         });
@@ -1153,7 +1153,7 @@ export default {
             headers: { Authorization: `Bearer ${this.token}` },
           }
         );
-        this.SET_SERVICE_CURRENT_VICTORIES({
+        this.setServiceCurrentVictories({
           service: this.service,
           operation,
         });
@@ -1172,7 +1172,7 @@ export default {
             headers: { Authorization: `Bearer ${this.token}` },
           }
         );
-        this.SET_SERVICE_CURRENT_CLASS_COUNT({
+        this.setServiceCurrentClassCount({
           service: this.service,
           operation,
         });
@@ -1191,7 +1191,7 @@ export default {
             headers: { Authorization: `Bearer ${this.token}` },
           }
         );
-        this.SET_SERVICE_ACCOUNT_STATUS({
+        this.setServiceAccountStatus({
           service: this.service,
           accountStatus:
             this.service.details.account_status === "in_use"
@@ -1215,15 +1215,15 @@ export default {
   },
   mounted() {
     const serviceId = parseInt(this.$route.params.id);
-    this.SET_CURRENT_SERVICE({
+    this.setCurrentService({
       serviceId: serviceId,
       tab: this.activeTab,
     });
     this.loadService(serviceId);
   },
   beforeUnmount() {
-    this.RESET_TEMP_SERVICE();
-    this.SET_CURRENT_SERVICE({
+    this.resetTempService();
+    this.setCurrentService({
       serviceId: null,
       tab: null,
     });

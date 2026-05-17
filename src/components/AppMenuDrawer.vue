@@ -60,9 +60,9 @@ export default {
     document.removeEventListener('keydown', this.onKeydown)
   },
   methods: {
-    ...mapMutations(['SET_OPEN_DROPDOWN_MENU']),
+    ...mapMutations(['setOpenDropdownMenu']),
     close() {
-      if (this.isOpen) this.SET_OPEN_DROPDOWN_MENU(null)
+      if (this.isOpen) this.setOpenDropdownMenu(null)
     },
     onKeydown(event) {
       if (event.key === 'Escape' && this.isOpen) this.close()

@@ -54,8 +54,8 @@ export default {
     }
   },
   methods: {
-    ...mapMutations('services', ['ADD_SERVICE_CHAT_ITEM']),
-    ...mapMutations ('notifications', ['ADD_NOTIFICATION','REMOVE_SERVICE_NOTIFICATIONS']),
+    ...mapMutations('services', ['addServiceChatItem']),
+    ...mapMutations ('notifications', ['addNotification','removeServiceNotifications']),
     generateUniqueId () {
       return '' + this.user.id + this.service.id + new Date().valueOf()
     },
@@ -70,7 +70,7 @@ export default {
       const uniqueId = this.generateUniqueId()
       const message = this.inputValue
       this.inputValue = ''
-      this.ADD_SERVICE_CHAT_ITEM({
+      this.addServiceChatItem({
         service: this.service,
         chatItem: {
           id: uniqueId,
@@ -101,7 +101,7 @@ export default {
           headers: { Authorization: `Bearer ${this.token}` }
         })
       }
-      this.REMOVE_SERVICE_NOTIFICATIONS(this.service.id)
+      this.removeServiceNotifications(this.service.id)
     }
   },
   mounted () {
@@ -110,11 +110,11 @@ export default {
     }
     // Legacy Vuex used `$store.subscribe` to react to every mutation; in Pinia
     // the equivalent is `store.$onAction` on the specific store. We listen on
-    // the services store for `ADD_SERVICE_CHAT_ITEM` and auto-scroll to the
+    // the services store for `addServiceChatItem` and auto-scroll to the
     // new message (unless the user has scrolled up to read history).
     const servicesStore = useServicesStore()
     this.unsubscribeFromStore = servicesStore.$onAction(({ name, args }) => {
-      if (name !== 'ADD_SERVICE_CHAT_ITEM') return
+      if (name !== 'addServiceChatItem') return
       const payload = args[0]
       if (payload?.service?.id !== this.service.id) return
       if (this.shouldScrollOnMessage()) return

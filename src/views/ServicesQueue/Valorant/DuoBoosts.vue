@@ -203,7 +203,7 @@ export default {
     ]),
   },
   methods: {
-    ...mapMutations("settings", ["SET_DEFAULT_GAME"]),
+    ...mapMutations("settings", ["setDefaultGame"]),
     hasDivision(tier) {
       return (
         tier !== "unranked" &&

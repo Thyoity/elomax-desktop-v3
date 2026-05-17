@@ -66,13 +66,13 @@ export default {
     ...mapState(['appVersion']),
   },
   methods: {
-    ...mapMutations('auth', ['AUTHENTICATE']),
+    ...mapMutations('auth', ['authenticate']),
     async onSubmit() {
       if (this.isLoading) return
       this.isLoading = true
       try {
         const { token, user } = await authApi.login(this.email, this.password)
-        this.AUTHENTICATE({
+        this.authenticate({
           token,
           user: {
             id: parseInt(user.id),

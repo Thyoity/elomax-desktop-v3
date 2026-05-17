@@ -38,9 +38,9 @@ export default {
     },
   },
   methods: {
-    ...mapMutations(['SET_OPEN_DROPDOWN_MENU']),
+    ...mapMutations(['setOpenDropdownMenu']),
     toggle() {
-      this.SET_OPEN_DROPDOWN_MENU(this.isOpen ? null : this.name)
+      this.setOpenDropdownMenu(this.isOpen ? null : this.name)
     },
   },
 }

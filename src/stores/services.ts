@@ -58,22 +58,22 @@ export const useServicesStore = defineStore('services', {
     inProgressTftPasses: (s) => filterInProgress(s.tftPasses),
   },
   actions: {
-    RESET_SERVICES_MODULE() {
+    resetServicesModule() {
       Object.assign(this, generateInitialState())
     },
-    SET_IS_LOADING_SERVICES(value = true) {
+    setIsLoadingServices(value = true) {
       this.isLoadingServices = value
     },
-    SET_LOADING_SERVICES_TEXT(value = '') {
+    setLoadingServicesText(value = '') {
       this.loadingServicesText = value
     },
-    SET_SERVICES(services: any) {
+    setServices(services: any) {
       const result = servicesDTO.in(services, false)
       for (const bucket of SERVICE_BUCKETS) {
         ;(this as any)[bucket] = result[bucket]
       }
     },
-    SET_TEMP_SERVICE({ service, onLoad }: { service: any; onLoad: (svc: any) => void }) {
+    setTempService({ service, onLoad }: { service: any; onLoad: (svc: any) => void }) {
       const result = servicesDTO.in([service], true)
       for (const bucket of SERVICE_BUCKETS) {
         if (result[bucket].length) {
@@ -83,56 +83,56 @@ export const useServicesStore = defineStore('services', {
       }
       onLoad(this.tempService)
     },
-    RESET_TEMP_SERVICE() {
+    resetTempService() {
       this.tempService = null
     },
-    SET_SERVICE_ACCOUNT({ service, account }: { service: any; account: any }) {
-      if (!isAllowed('SET_SERVICE_ACCOUNT', service.type)) return
+    setServiceAccount({ service, account }: { service: any; account: any }) {
+      if (!isAllowed('setServiceAccount', service.type)) return
       const s = findServiceInState(this.$state, service)
       if (!s) return
       s.details.account = { ...account }
     },
-    SET_SERVICE_ACCOUNT_STATUS({ service, accountStatus }: { service: any; accountStatus: any }) {
-      if (!isAllowed('SET_SERVICE_ACCOUNT_STATUS', service.type)) return
+    setServiceAccountStatus({ service, accountStatus }: { service: any; accountStatus: any }) {
+      if (!isAllowed('setServiceAccountStatus', service.type)) return
       const s = findServiceInState(this.$state, service)
       if (!s) return
       s.details.account_status = accountStatus
     },
-    SET_SERVICE_VICTORIES_DEFEATS({ service, operation }: { service: any; operation: string }) {
-      if (!isAllowed('SET_SERVICE_VICTORIES_DEFEATS', service.type)) return
+    setServiceVictoriesDefeats({ service, operation }: { service: any; operation: string }) {
+      if (!isAllowed('setServiceVictoriesDefeats', service.type)) return
       const op = VICTORY_DEFEAT_OPS[operation]
       if (!op) return
       const s = findServiceInState(this.$state, service)
       if (!s) return
       s.details[op.field] = parseInt(s.details[op.field]) + op.delta
     },
-    SET_SERVICE_CURRENT_VICTORIES({ service, operation }: { service: any; operation: string }) {
-      if (!isAllowed('SET_SERVICE_CURRENT_VICTORIES', service.type)) return
+    setServiceCurrentVictories({ service, operation }: { service: any; operation: string }) {
+      if (!isAllowed('setServiceCurrentVictories', service.type)) return
       const s = findServiceInState(this.$state, service)
       if (!s) return
       const delta = operation === 'add' ? 1 : -1
       s.details.current_victories = parseInt(s.details.current_victories) + delta
     },
-    SET_SERVICE_CURRENT_CLASS_COUNT({ service, operation }: { service: any; operation: string }) {
-      if (!isAllowed('SET_SERVICE_CURRENT_CLASS_COUNT', service.type)) return
+    setServiceCurrentClassCount({ service, operation }: { service: any; operation: string }) {
+      if (!isAllowed('setServiceCurrentClassCount', service.type)) return
       const s = findServiceInState(this.$state, service)
       if (!s) return
       const delta = operation === 'add' ? 1 : -1
       s.details.current_class_count = parseInt(s.details.current_class_count) + delta
     },
-    SET_SERVICE_CLIENT_IS_ONLINE({ service, isOnline }: { service: any; isOnline: boolean }) {
+    setServiceClientIsOnline({ service, isOnline }: { service: any; isOnline: boolean }) {
       const s = findServiceInState(this.$state, service)
       if (!s) return
       _assign(s, { client: { ...s.client, isOnline } })
     },
-    ADD_SERVICE_CHAT_ITEM({ service, chatItem }: { service: any; chatItem: any }) {
+    addServiceChatItem({ service, chatItem }: { service: any; chatItem: any }) {
       if (this.tempService && this.tempService.id === service.id) {
         this.tempService.chatItems.push(chatItem)
       }
       const s = findServiceInState(this.$state, service)
       if (s) s.chatItems.push(chatItem)
     },
-    FINISH_SERVICE({
+    finishService({
       service,
       dateFinished,
       screenshot,

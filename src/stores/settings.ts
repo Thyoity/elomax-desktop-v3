@@ -37,38 +37,38 @@ export const useSettingsStore = defineStore('settings', {
     defaultGame: 'leagueOfLegends',
   }),
   actions: {
-    SET_LOL_PATH(lolPath: string | null) {
+    setLolPath(lolPath: string | null) {
       this.lolPath = lolPath
     },
-    SET_NOTIFY_NEW_SERVICE_IN_QUEUE(value = true) {
+    setNotifyNewServiceInQueue(value = true) {
       this.notifyNewServiceInQueue = value
     },
-    SET_PLAY_SOUND_ON_NEW_CHAT_ITEM(value = true) {
+    setPlaySoundOnNewChatItem(value = true) {
       this.playSoundOnNewChatItem = value
     },
-    SET_PLAY_SOUND_ON_NEW_NOTIFICATION(value = true) {
+    setPlaySoundOnNewNotification(value = true) {
       this.playSoundOnNewNotification = value
     },
-    SET_LEAGUE_OF_LEGENDS_NOTIFICATION({ sound, volume }: { sound: string; volume: number }) {
+    setLeagueOfLegendsNotification({ sound, volume }: { sound: string; volume: number }) {
       this.leagueOfLegendsNotificationVolume = volume
       this.leagueOfLegendsNotificationSound = sound
     },
-    SET_VALORANT_NOTIFICATION({ sound, volume }: { sound: string; volume: number }) {
+    setValorantNotification({ sound, volume }: { sound: string; volume: number }) {
       this.valorantNotificationVolume = volume
       this.valorantNotificationSound = sound
     },
-    SET_WILD_RIFT_NOTIFICATION({ sound, volume }: { sound: string; volume: number }) {
+    setWildRiftNotification({ sound, volume }: { sound: string; volume: number }) {
       this.wildRiftNotificationVolume = volume
       this.wildRiftNotificationSound = sound
     },
-    SET_TFT_NOTIFICATION({ sound, volume }: { sound: string; volume: number }) {
+    setTftNotification({ sound, volume }: { sound: string; volume: number }) {
       this.tftNotificationVolume = volume
       this.tftNotificationSound = sound
     },
-    SET_LOL_AUTO_QUEUE(value = false) {
+    setLolAutoQueue(value = false) {
       this.lolAutoQueue = value
     },
-    SET_DEFAULT_GAME(game: string) {
+    setDefaultGame(game: string) {
       this.defaultGame = game
     },
   },

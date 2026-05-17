@@ -113,11 +113,11 @@ export default {
     }
   },
   methods: {
-    ...mapMutations('auth', ['SET_USER']),
-    ...mapMutations('services-queue', ['SET_IS_LOADING_SERVICES_QUEUE', 'SET_LOADING_SERVICES_QUEUE_TEXT', 'SET_SERVICES_QUEUE', 'SET_SERVICES_QUEUE_FETCH_SERVER_TIME']),
-    ...mapMutations('services', ['SET_IS_LOADING_SERVICES', 'SET_LOADING_SERVICES_TEXT', 'SET_SERVICES']),
-    ...mapMutations('notifications', ['SET_IS_LOADING_NOTIFICATIONS', 'SET_LOADING_NOTIFICATIONS_TEXT', 'SET_NOTIFICATIONS']),
-    ...mapMutations(['SET_CURRENT_SERVICE', 'SET_SERVICE_NOTIFICATION_SOUND', 'SET_SERVICE_NOTIFICATION_SOUNDS', 'SET_CHAT_MESSAGE_SOUND', 'SET_NOTIFICATION_SOUND']),
+    ...mapMutations('auth', ['setUser']),
+    ...mapMutations('services-queue', ['setIsLoadingServicesQueue', 'setLoadingServicesQueueText', 'setServicesQueue', 'setServicesQueueFetchServerTime']),
+    ...mapMutations('services', ['setIsLoadingServices', 'setLoadingServicesText', 'setServices']),
+    ...mapMutations('notifications', ['setIsLoadingNotifications', 'setLoadingNotificationsText', 'setNotifications']),
+    ...mapMutations(['setCurrentService', 'setServiceNotificationSound', 'setServiceNotificationSounds', 'setChatMessageSound', 'setNotificationSound']),
     async loadTransactions() {
       this.isError = false;
       this.isLoadingTransactions = true;
@@ -138,52 +138,52 @@ export default {
             dateCreated: dayjs(transaction.date_created),
           };
         });
-        this.SET_USER(res.data.data.user)
+        this.setUser(res.data.data.user)
       } catch (err) {
         this.isError = true;
       }
       this.isLoadingTransactions = false;
     },
     async loadServicesQueue(loadingText = 'Carregando serviços...') {
-      this.SET_IS_LOADING_SERVICES_QUEUE(true)
-      this.SET_LOADING_SERVICES_QUEUE_TEXT(loadingText)
+      this.setIsLoadingServicesQueue(true)
+      this.setLoadingServicesQueueText(loadingText)
       try {
         const { data } = await axios.get(`${API_BASE_URL}/services/queue`, {
           headers: { Authorization: `Bearer ${this.token}` }
         })
-        this.SET_SERVICES_QUEUE({
+        this.setServicesQueue({
           queue: data.data.queue
         })
-        this.SET_SERVICES_QUEUE_FETCH_SERVER_TIME(data.data.server_time)
+        this.setServicesQueueFetchServerTime(data.data.server_time)
       } catch (err) {
         console.log('erro', err)
       }
-      this.SET_IS_LOADING_SERVICES_QUEUE(false)
-      this.SET_LOADING_SERVICES_QUEUE_TEXT('')
+      this.setIsLoadingServicesQueue(false)
+      this.setLoadingServicesQueueText('')
     },
     async loadServices(loadingText = 'Carregando serviços...') {
-      this.SET_IS_LOADING_SERVICES(true)
-      this.SET_LOADING_SERVICES_TEXT(loadingText)
+      this.setIsLoadingServices(true)
+      this.setLoadingServicesText(loadingText)
       try {
         const { data } = await axios.get(`${API_BASE_URL}/services`, {
           headers: { Authorization: `Bearer ${this.token}` }
         })
-        this.SET_SERVICES(data.data)
+        this.setServices(data.data)
       } catch (err) {}
-      this.SET_IS_LOADING_SERVICES(false)
-      this.SET_LOADING_SERVICES_TEXT('')
+      this.setIsLoadingServices(false)
+      this.setLoadingServicesText('')
     },
     async loadNotifications(loadingText = 'Carregando notificações...') {
-      this.SET_IS_LOADING_NOTIFICATIONS(true)
-      this.SET_LOADING_NOTIFICATIONS_TEXT(loadingText)
+      this.setIsLoadingNotifications(true)
+      this.setLoadingNotificationsText(loadingText)
       try {
         const { data } = await axios.get(`${API_BASE_URL}/user/notifications`, {
           headers: { Authorization: `Bearer ${this.token}` }
         })
-        this.SET_NOTIFICATIONS(data.data)
+        this.setNotifications(data.data)
       } catch (err) {}
-      this.SET_IS_LOADING_NOTIFICATIONS(false)
-      this.SET_LOADING_NOTIFICATIONS_TEXT('')
+      this.setIsLoadingNotifications(false)
+      this.setLoadingNotificationsText('')
     },
     startPusher() {
       this.$pusher.initialize(PUSHER_KEY, {
@@ -246,7 +246,7 @@ export default {
   },
   mounted() {
     this.startPusher();
-    this.SET_SERVICE_NOTIFICATION_SOUNDS(
+    this.setServiceNotificationSounds(
       {
         n1: new Howl({
           src: [
@@ -279,17 +279,17 @@ export default {
           ]
         })
     })
-    this.SET_SERVICE_NOTIFICATION_SOUND(new Howl({
+    this.setServiceNotificationSound(new Howl({
         src: [
             soundUrl('service-notification')
         ]
     }))
-    this.SET_CHAT_MESSAGE_SOUND(new Howl({
+    this.setChatMessageSound(new Howl({
         src: [
             soundUrl('chat-message')
         ]
     }))
-    this.SET_NOTIFICATION_SOUND(new Howl({
+    this.setNotificationSound(new Howl({
         src: [
             soundUrl('notification')
         ]

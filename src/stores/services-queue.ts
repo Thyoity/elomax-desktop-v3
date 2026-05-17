@@ -35,20 +35,20 @@ const generateInitialState = (): State => {
 export const useServicesQueueStore = defineStore('services-queue', {
   state: (): State => generateInitialState(),
   actions: {
-    RESET_SERVICES_QUEUE_MODULE() {
+    resetServicesQueueModule() {
       Object.assign(this, generateInitialState())
     },
-    SET_SERVICES_QUEUE_FETCH_SERVER_TIME(serverTime: any) {
+    setServicesQueueFetchServerTime(serverTime: any) {
       this.fetchLocalTime = new Date()
       this.fetchServerTime = serverTime
     },
-    SET_IS_LOADING_SERVICES_QUEUE(value = true) {
+    setIsLoadingServicesQueue(value = true) {
       this.isLoadingServicesQueue = value
     },
-    SET_LOADING_SERVICES_QUEUE_TEXT(value = '') {
+    setLoadingServicesQueueText(value = '') {
       this.loadingServicesQueueText = value
     },
-    SET_SERVICES_QUEUE({ queue }: { queue: any }) {
+    setServicesQueue({ queue }: { queue: any }) {
       const result = servicesDTO.in(queue)
       for (const bucket of SERVICE_BUCKETS) {
         ;(this as any)[toQueueBucket(bucket)] = result[bucket]

@@ -27,16 +27,16 @@ const generateInitialState = (): State => ({
 export const useNotificationsStore = defineStore('notifications', {
   state: (): State => generateInitialState(),
   actions: {
-    RESET_NOTIFICATIONS_MODULE() {
+    resetNotificationsModule() {
       Object.assign(this, generateInitialState())
     },
-    SET_IS_LOADING_NOTIFICATIONS(value = true) {
+    setIsLoadingNotifications(value = true) {
       this.isLoadingNotifications = value
     },
-    SET_LOADING_NOTIFICATIONS_TEXT(value = '') {
+    setLoadingNotificationsText(value = '') {
       this.loadingNotificationsText = value
     },
-    SET_NOTIFICATIONS(notifications: any[]) {
+    setNotifications(notifications: any[]) {
       this.notifications = notifications.map((notification: any) => ({
         id: parseInt(notification.id),
         relatedServiceId: parseInt(notification.id_related_service),
@@ -50,7 +50,7 @@ export const useNotificationsStore = defineStore('notifications', {
         dateRead: notification.date_read ? dayjs(notification.date_read) : null,
       }))
     },
-    ADD_NOTIFICATION({
+    addNotification({
       relatedServiceId,
       client,
       notification,
@@ -69,7 +69,7 @@ export const useNotificationsStore = defineStore('notifications', {
         dateRead: notification.date_read ? dayjs(notification.date_read) : null,
       })
     },
-    REMOVE_SERVICE_NOTIFICATIONS(serviceId: number) {
+    removeServiceNotifications(serviceId: number) {
       this.notifications = _filter(this.notifications, (n) => n.relatedServiceId !== serviceId)
     },
   },

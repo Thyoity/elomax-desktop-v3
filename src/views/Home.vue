@@ -84,7 +84,7 @@ export default {
   },
   methods: {
     ...mapMutations(['setImportedData']),
-    ...mapMutations('services', ['SET_SERVICES']),
+    ...mapMutations('services', ['setServices']),
     initializeImport() {
       // Asks the Rust LCU bridge for a fresh summoner + ranked snapshot. The
       // worker emits a `lol-account-data` event that App.vue picks up and

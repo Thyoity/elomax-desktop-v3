@@ -132,14 +132,14 @@
           <p style="color: #FFF; margin-top: 0;">Som ao receber mensagem no chat:</p>
           <AppToggleButton 
             :value="playSoundOnNewChatItem"
-            @change="SET_PLAY_SOUND_ON_NEW_CHAT_ITEM($event.value)"
+            @change="setPlaySoundOnNewChatItem($event.value)"
             :color="{checked: '#85d0ff', unchecked: 'rgb(170, 170, 170)', disabled: 'rgb(102, 102, 102)'}" />
         </div>
         <div class="setting-row">
           <p style="color: #FFF; margin-top: 0;">Som ao receber notificação:</p>
           <AppToggleButton 
             :value="playSoundOnNewNotification"
-            @change="SET_PLAY_SOUND_ON_NEW_NOTIFICATION($event.value)"
+            @change="setPlaySoundOnNewNotification($event.value)"
             :color="{checked: '#85d0ff', unchecked: 'rgb(170, 170, 170)', disabled: 'rgb(102, 102, 102)'}" />
         </div>
         <h3>League of Legends</h3>
@@ -147,7 +147,7 @@
           <p style="color: #FFF; margin-top: 0;">Aceitar fila automaticamente:</p>
           <AppToggleButton 
             :value="lolAutoQueue"
-            @change="SET_LOL_AUTO_QUEUE($event.value)"
+            @change="setLolAutoQueue($event.value)"
             :color="{checked: '#85d0ff', unchecked: 'rgb(170, 170, 170)', disabled: 'rgb(102, 102, 102)'}" />
         </div>
         <div class="setting-row">
@@ -156,7 +156,7 @@
             {{ lolPath ? 'Trocar pasta…' : 'Selecionar pasta…' }}
           </button>
           <span style="margin-top: 20px; color: #FFFFFF;" v-if="lolPath">{{ lolPath }}</span>
-          <a href="javascript:void(0)" style="margin-top: 20px; color: #FFFFFF;" @click="SET_LOL_PATH(null)" v-if="lolPath">Limpar</a>
+          <a href="javascript:void(0)" style="margin-top: 20px; color: #FFFFFF;" @click="setLolPath(null)" v-if="lolPath">Limpar</a>
         </div>
       </div>
     </OverlayScrollbar>
@@ -214,15 +214,15 @@ export default {
   },
   methods: {
     ...mapMutations ("settings", [
-      "SET_LOL_PATH", 
-      "SET_NOTIFY_NEW_SERVICE_IN_QUEUE", 
-      "SET_PLAY_SOUND_ON_NEW_CHAT_ITEM", 
-      "SET_PLAY_SOUND_ON_NEW_NOTIFICATION", 
-      "SET_LOL_AUTO_QUEUE",
-      "SET_LEAGUE_OF_LEGENDS_NOTIFICATION",
-      "SET_VALORANT_NOTIFICATION",
-      "SET_WILD_RIFT_NOTIFICATION",
-      "SET_TFT_NOTIFICATION"
+      "setLolPath", 
+      "setNotifyNewServiceInQueue", 
+      "setPlaySoundOnNewChatItem", 
+      "setPlaySoundOnNewNotification", 
+      "setLolAutoQueue",
+      "setLeagueOfLegendsNotification",
+      "setValorantNotification",
+      "setWildRiftNotification",
+      "setTftNotification"
     ]),
     getNotificationLabelByValue(value){
       const found = _.find(this.notificationSounds, { value })
@@ -242,7 +242,7 @@ export default {
       try {
         const { open } = await import('@tauri-apps/plugin-dialog')
         const selected = await open({ directory: true, multiple: false })
-        if (typeof selected === 'string') this.SET_LOL_PATH(selected)
+        if (typeof selected === 'string') this.setLolPath(selected)
       } catch {
         // Browser-only dev (plain `vite`) — silently skip.
       }
@@ -252,30 +252,30 @@ export default {
       switch (game) {
         case 'leagueOfLegends':
           if (type === 'sound') {
-            this.SET_LEAGUE_OF_LEGENDS_NOTIFICATION({ sound: value, volume: this.leagueOfLegendsNotificationVolume })
+            this.setLeagueOfLegendsNotification({ sound: value, volume: this.leagueOfLegendsNotificationVolume })
           } else if (type === 'volume') {
-            this.SET_LEAGUE_OF_LEGENDS_NOTIFICATION({ sound: this.leagueOfLegendsNotificationSound, volume: value })
+            this.setLeagueOfLegendsNotification({ sound: this.leagueOfLegendsNotificationSound, volume: value })
           }
           break;
         case 'valorant':
           if (type === 'sound') {
-            this.SET_VALORANT_NOTIFICATION({ sound: value, volume: this.valorantNotificationVolume })
+            this.setValorantNotification({ sound: value, volume: this.valorantNotificationVolume })
           } else if (type === 'volume') {
-            this.SET_VALORANT_NOTIFICATION({ sound: this.valorantNotificationSound, volume: value })
+            this.setValorantNotification({ sound: this.valorantNotificationSound, volume: value })
           }
           break;
         case 'wildRift':
           if (type === 'sound') {
-            this.SET_WILD_RIFT_NOTIFICATION({ sound: value, volume: this.wildRiftNotificationVolume })
+            this.setWildRiftNotification({ sound: value, volume: this.wildRiftNotificationVolume })
           } else if (type === 'volume') {
-            this.SET_WILD_RIFT_NOTIFICATION({ sound: this.wildRiftNotificationSound, volume: value })
+            this.setWildRiftNotification({ sound: this.wildRiftNotificationSound, volume: value })
           }
           break;
         case 'tft':
           if (type === 'sound') {
-            this.SET_TFT_NOTIFICATION({ sound: value, volume: this.tftNotificationVolume })
+            this.setTftNotification({ sound: value, volume: this.tftNotificationVolume })
           } else if (type === 'volume') {
-            this.SET_TFT_NOTIFICATION({ sound: this.tftNotificationSound, volume: value })
+            this.setTftNotification({ sound: this.tftNotificationSound, volume: value })
           }
           break;
       }

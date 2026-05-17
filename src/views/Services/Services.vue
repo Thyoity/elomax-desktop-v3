@@ -5,11 +5,11 @@
       <div style="display: flex; flex-direction: row; align-items: center; justify-content: center;">
         <ul class="animated fadeIn game-list">
           <li>
-            <AppLeagueOfLegendsButton :active="defaultGame === 'leagueOfLegends'" @click="SET_DEFAULT_GAME('leagueOfLegends')"></AppLeagueOfLegendsButton>
+            <AppLeagueOfLegendsButton :active="defaultGame === 'leagueOfLegends'" @click="setDefaultGame('leagueOfLegends')"></AppLeagueOfLegendsButton>
             <span v-if="inProgressLeagueOfLegendsServicesCount > 0" class="count-label">{{ inProgressLeagueOfLegendsServicesCount }}</span>
           </li>
           <li>
-            <AppWildRiftButton :active="defaultGame === 'wildRift'" @click="SET_DEFAULT_GAME('wildRift')"></AppWildRiftButton>
+            <AppWildRiftButton :active="defaultGame === 'wildRift'" @click="setDefaultGame('wildRift')"></AppWildRiftButton>
             <span v-if="inProgressWildRiftServicesCount > 0" class="count-label">{{ inProgressWildRiftServicesCount }}</span>
           </li>
         </ul>
@@ -547,7 +547,7 @@ export default {
     }
   },
   methods: {
-    ...mapMutations('settings', ['SET_DEFAULT_GAME']),
+    ...mapMutations('settings', ['setDefaultGame']),
     formatDate (dateDeadline) {
       return dayjs(dateDeadline).format("DD/MM/YY HH:mm")
     },

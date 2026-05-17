@@ -22,26 +22,26 @@ export default {
     },
   },
   methods: {
-    ...mapMutations('services', ['SET_SERVICE_CLIENT_IS_ONLINE', 'ADD_SERVICE_CHAT_ITEM']),
-    ...mapMutations('notifications', ['ADD_NOTIFICATION']),
+    ...mapMutations('services', ['setServiceClientIsOnline', 'addServiceChatItem']),
+    ...mapMutations('notifications', ['addNotification']),
     onSubscriptionSucceeded(data) {
       const isClientOnline = !!data?.members?.[this.service.client.id]
-      this.SET_SERVICE_CLIENT_IS_ONLINE({ service: this.service, isOnline: isClientOnline })
+      this.setServiceClientIsOnline({ service: this.service, isOnline: isClientOnline })
     },
     onMemberAdded(member) {
       if (member?.info?.userId === this.service.client.id) {
-        this.SET_SERVICE_CLIENT_IS_ONLINE({ service: this.service, isOnline: true })
+        this.setServiceClientIsOnline({ service: this.service, isOnline: true })
       }
     },
     onMemberRemoved(member) {
       if (member?.info?.userId === this.service.client.id) {
-        this.SET_SERVICE_CLIENT_IS_ONLINE({ service: this.service, isOnline: false })
+        this.setServiceClientIsOnline({ service: this.service, isOnline: false })
       }
     },
     onNewChatItem(data) {
       if (data?.from_app) return
 
-      this.ADD_SERVICE_CHAT_ITEM({
+      this.addServiceChatItem({
         service: this.service,
         chatItem: {
           id: data.uid,
