@@ -59,11 +59,19 @@ export default {
     generateUniqueId () {
       return '' + this.user.id + this.service.id + new Date().valueOf()
     },
-    shouldScrollOnMessage () {
-      if (this.$refs.scroll.getCurrentviewDom() && this.$refs.scroll.getCurrentviewDom()[0]) {
-        return this.$refs.scroll.getPosition().scrollTop < (this.$refs.scroll.getCurrentviewDom()[0].scrollHeight - 292) - 100
-      }
-      return false
+    getViewport () {
+      const instance = this.$refs.scroll?.osInstance?.()
+      return instance?.elements()?.viewport ?? null
+    },
+    isScrolledAwayFromBottom () {
+      const viewport = this.getViewport()
+      if (!viewport) return false
+      return viewport.scrollTop < viewport.scrollHeight - viewport.clientHeight - 100
+    },
+    scrollToChatItem (uid, smooth = true) {
+      const target = document.getElementById('chat-item-' + uid)
+      if (!target) return
+      target.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'end' })
     },
     async sendMessage () {
       if (!this.isMessageSendable) return
@@ -106,20 +114,16 @@ export default {
   },
   mounted () {
     if (this.service.chatItems.length > 0) {
-      this.$refs.scroll.scrollIntoView("#chat-item-" + this.service.chatItems[this.service.chatItems.length - 1].uid, 0)
+      this.scrollToChatItem(this.service.chatItems[this.service.chatItems.length - 1].uid, false)
     }
-    // Legacy Vuex used `$store.subscribe` to react to every mutation; in Pinia
-    // the equivalent is `store.$onAction` on the specific store. We listen on
-    // the services store for `addServiceChatItem` and auto-scroll to the
-    // new message (unless the user has scrolled up to read history).
     const servicesStore = useServicesStore()
     this.unsubscribeFromStore = servicesStore.$onAction(({ name, args }) => {
       if (name !== 'addServiceChatItem') return
       const payload = args[0]
       if (payload?.service?.id !== this.service.id) return
-      if (this.shouldScrollOnMessage()) return
+      if (this.isScrolledAwayFromBottom()) return
       setTimeout(() => {
-        this.$refs.scroll.scrollIntoView("#chat-item-" + payload.chatItem.uid, 500)
+        this.scrollToChatItem(payload.chatItem.uid)
       }, 0)
     })
     this.markServiceNotificationsAsRead()
