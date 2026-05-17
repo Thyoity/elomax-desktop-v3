@@ -24,3 +24,6 @@ src-tauri/gen
 # Ionicons assets are synced from node_modules by scripts/sync-ionicons.mjs
 # on `npm install` — no need to commit a copy.
 public/ionicons/
+
+# One-shot migration / batch helpers — see CLAUDE.md "Scripts" section.
+scripts/oneshot/
