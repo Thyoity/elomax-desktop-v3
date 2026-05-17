@@ -40,16 +40,19 @@
   </div>
 </template>
 <script>
+import { useAuthStore } from '@/stores/auth'
+import { useNotificationsStore } from '@/stores/notifications'
 import { API_BASE_URL, WEB_BASE_URL } from '@/config/api'
-import { mapState, mapMutations } from '@/stores/compat'
+import { mapActions, mapState } from 'pinia'
+import { useServicesStore } from '@/stores/services'
 import axios from 'axios'
 import { fakeUpload } from './upload-service'
 const STATUS_INITIAL = 0, STATUS_SAVING = 1, STATUS_SUCCESS = 2, STATUS_FAILED = 3
 export default {
   props: ['service'],
     computed: {
-    ...mapState ('auth', ['user', 'token']),
-    ...mapState ('notifications', ['notifications']),
+    ...mapState(useAuthStore, ['user', 'token']),
+    ...mapState(useNotificationsStore, ['notifications']),
     isInitial() {
       return this.currentStatus === STATUS_INITIAL;
     },
@@ -75,7 +78,7 @@ export default {
     }
   },
   methods: {
-    ...mapMutations('services', ['finishService']),
+    ...mapActions(useServicesStore, ['finishService']),
     reset() {
       this.formData = null
       this.currentStatus = STATUS_INITIAL;

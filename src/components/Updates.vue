@@ -50,8 +50,8 @@
 </template>
 
 <script>
-import { mapState, mapMutations } from '@/stores/compat'
-
+import { mapActions, mapState } from 'pinia'
+import { useAppStore } from '@/stores/app'
 export default {
   name: 'AppUpdates',
   data() {
@@ -60,7 +60,7 @@ export default {
     }
   },
   computed: {
-    ...mapState([
+    ...mapState(useAppStore, [
       'appVersion',
       'isCheckingForUpdates',
       'hasNewRelease',
@@ -88,7 +88,7 @@ export default {
     },
   },
   methods: {
-    ...mapMutations(['setIsCheckingForUpdates', 'setHasNewRelease']),
+    ...mapActions(useAppStore, ['setIsCheckingForUpdates', 'setHasNewRelease']),
     onInstallUpdate() {
       // Bridge handler triggers `relaunch()` on the Tauri side. After that
       // returns, the app process is replaced so we don't need to do anything

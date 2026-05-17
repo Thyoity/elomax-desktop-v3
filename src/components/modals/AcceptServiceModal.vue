@@ -43,7 +43,8 @@
 <script>
 import axios from 'axios'
 import { VueFinalModal } from 'vue-final-modal'
-import { mapState } from '@/stores/compat'
+import { mapState } from 'pinia'
+import { useAuthStore } from '@/stores/auth'
 import { API_BASE_URL, captchaImageUrl } from '@/config/api'
 
 export default {
@@ -64,7 +65,7 @@ export default {
     }
   },
   computed: {
-    ...mapState('auth', ['token']),
+    ...mapState(useAuthStore, ['token']),
   },
   methods: {
     async fillCaptcha() {

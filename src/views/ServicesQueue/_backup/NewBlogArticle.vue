@@ -87,7 +87,8 @@
 </template>
 
 <script>
-import { mapState, mapMutations } from "@/stores/compat";
+import { mapState } from "pinia";
+import { useAuthStore } from "@/stores/auth";
 import CKEditor from "@ckeditor/ckeditor5-vue2";
 
 import InlineEditor from "@ckeditor/ckeditor5-editor-inline/src/inlineeditor";
@@ -195,7 +196,7 @@ export default {
     };
   },
   computed: {
-    ...mapState("auth", ["token"]),
+    ...mapState(useAuthStore, ["token"]),
   },
   methods: {
     getArticleDescription(article) {

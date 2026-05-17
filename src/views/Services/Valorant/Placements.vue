@@ -122,8 +122,10 @@
 </template>
 
 <script>
+import { useServicesStore } from '@/stores/services'
+import { mapActions, mapState } from 'pinia'
 import { valorantBadgeUrl } from '@/config/assets'
-import { mapState, mapMutations, mapGetters } from "@/stores/compat";
+;
 import dayjs from "dayjs";
 export default {
   name: "Services",
@@ -145,8 +147,8 @@ export default {
     };
   },
   computed: {
-    ...mapState("services", ["isLoadingServices", "loadingServicesText"]),
-    ...mapGetters("services", ["inProgressValorantPlacements"]),
+    ...mapState(useServicesStore, ["isLoadingServices", "loadingServicesText"]),
+    ...mapState(useServicesStore, ["inProgressValorantPlacements"]),
   },
   methods: {
     formatDate(dateDeadline) {

@@ -11,7 +11,8 @@
 </template>
 <script>
 import { useModal } from 'vue-final-modal'
-import { mapState } from '@/stores/compat'
+import { mapState } from 'pinia'
+import { useServicesQueueStore } from '@/stores/services-queue'
 import AcceptServiceModal from '@/components/modals/AcceptServiceModal.vue'
 
 export default {
@@ -24,7 +25,7 @@ export default {
     }
   },
   computed: {
-    ...mapState('services-queue', ['fetchLocalTime', 'fetchServerTime'])
+    ...mapState(useServicesQueueStore, ['fetchLocalTime', 'fetchServerTime'])
   },
   methods: {
     updateCountdown(){

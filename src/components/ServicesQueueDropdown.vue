@@ -80,14 +80,14 @@
 </template>
 
 <script>
-import { mapState } from '@/stores/compat'
-
+import { mapState } from 'pinia'
+import { useServicesQueueStore } from '@/stores/services-queue'
 const QUEUE_BASE = '/services-queue'
 
 export default {
   name: 'ServicesQueueMenuContent',
   computed: {
-    ...mapState('services-queue', [
+    ...mapState(useServicesQueueStore, [
       'queueEloBoosts',
       'queuePlacements',
       'queueDuoBoosts',

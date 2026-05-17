@@ -465,7 +465,9 @@
 
 <script>
 import { badgeUrl } from '@/config/assets'
-import { mapState, mapMutations } from '@/stores/compat'
+import { mapActions, mapState } from 'pinia'
+import { useServicesQueueStore } from '@/stores/services-queue'
+import { useSettingsStore } from '@/stores/settings'
 import LeagueOfLegendsButtonComponent from '@/components/Buttons/LeagueOfLegends.vue'
 import WildRiftButtonComponent from '@/components/Buttons/WildRift.vue'
 
@@ -494,8 +496,8 @@ export default {
     }
   },
   computed: {
-    ...mapState('settings', ['defaultGame']),
-    ...mapState('services-queue', [
+    ...mapState(useSettingsStore, ['defaultGame']),
+    ...mapState(useServicesQueueStore, [
       'isLoadingServicesQueue', 
       'loadingServicesQueueText', 
 
@@ -523,7 +525,7 @@ export default {
     }
   },
   methods: {
-    ...mapMutations('settings', ['setDefaultGame']),
+    ...mapActions(useSettingsStore, ['setDefaultGame']),
     hasDivision (tier) {
       return tier !== 'unranked' && tier !== 'master' && tier !== 'grandmaster' && tier !== 'challenger'
     }

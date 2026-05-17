@@ -110,7 +110,8 @@
 
 <script>
 import { badgeUrl } from '@/config/assets'
-import { mapState, mapMutations } from "@/stores/compat";
+import { mapState } from "pinia";
+import { useServicesQueueStore } from "@/stores/services-queue";
 export default {
   name: "ServicesQueue",
     data() {
@@ -132,7 +133,7 @@ export default {
     };
   },
   computed: {
-    ...mapState("services-queue", [
+    ...mapState(useServicesQueueStore, [
       "isLoadingServicesQueue",
       "loadingServicesQueueText",
       "queueTftPlacements",

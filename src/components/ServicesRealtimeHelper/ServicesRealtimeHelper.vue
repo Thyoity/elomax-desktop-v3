@@ -24,12 +24,17 @@
     <AppServiceRealtimeHelper v-for="placement in tftPlacements" :key="placement.id" :service="placement"></AppServiceRealtimeHelper>
     <AppServiceRealtimeHelper v-for="pass in tftPasses" :key="pass.id" :service="pass"></AppServiceRealtimeHelper>
 
-    <AppServiceRealtimeHelper v-if="tempService" :service="tempService"></AppServiceRealtimeHelper>
+    <AppServiceRealtimeHelper v-if="detailedService" :service="detailedService"></AppServiceRealtimeHelper>
   </div>
 </template>
 
 <script>
-import { mapState, mapMutations } from '@/stores/compat'
+import { mapActions, mapState } from 'pinia'
+import { useAppStore } from '@/stores/app'
+import { useAuthStore } from '@/stores/auth'
+import { useNotificationsStore } from '@/stores/notifications'
+import { useServicesStore } from '@/stores/services'
+import { useSettingsStore } from '@/stores/settings'
 import AppServiceRealtimeHelperComponent from './ServiceRealtimeHelper.vue'
 import { pusherChannel, pusherEvents } from '@/config/pusher-channels'
 
@@ -49,22 +54,22 @@ export default {
     AppServiceRealtimeHelper: AppServiceRealtimeHelperComponent,
   },
   computed: {
-    ...mapState('auth', ['user']),
-    ...mapState('services', [
+    ...mapState(useAuthStore, ['user']),
+    ...mapState(useServicesStore, [
       'eloBoosts', 'winBoosts', 'duoBoosts', 'placements', 'masteries', 'maintenances', 'coachings', 'replayAnalyses',
       'valorantEloBoosts', 'valorantWinBoosts', 'valorantDuoBoosts', 'valorantPlacements',
       'wildRiftEloBoosts', 'wildRiftWinBoosts', 'wildRiftDuoBoosts', 'wildRiftPlacements',
       'tftEloBoosts', 'tftWinBoosts', 'tftPlacements', 'tftPasses',
-      'tempService',
+      'detailedService',
     ]),
-    ...mapState('settings', [
+    ...mapState(useSettingsStore, [
       'playSoundOnNewNotification', 'playSoundOnNewChatItem',
       'leagueOfLegendsNotificationVolume', 'leagueOfLegendsNotificationSound',
       'valorantNotificationVolume', 'valorantNotificationSound',
       'wildRiftNotificationVolume', 'wildRiftNotificationSound',
       'tftNotificationVolume', 'tftNotificationSound',
     ]),
-    ...mapState(['currentServiceId', 'currentServiceTab', 'serviceNotificationSound', 'serviceNotificationSounds', 'notificationSound', 'chatMessageSound']),
+    ...mapState(useAppStore, ['currentServiceId', 'currentServiceTab', 'serviceNotificationSound', 'serviceNotificationSounds', 'notificationSound', 'chatMessageSound']),
   },
   data() {
     return {
@@ -76,8 +81,8 @@ export default {
     }
   },
   methods: {
-    ...mapMutations('notifications', ['addNotification', 'removeServiceNotifications']),
-    ...mapMutations('auth', ['updateUserCredit']),
+    ...mapActions(useNotificationsStore, ['addNotification', 'removeServiceNotifications']),
+    ...mapActions(useAuthStore, ['updateUserCredit']),
     isCurrentUser(id) {
       return parseInt(id) === parseInt(this.user.id)
     },

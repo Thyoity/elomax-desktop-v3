@@ -134,8 +134,10 @@
 </template>
 
 <script>
+import { useServicesStore } from '@/stores/services'
+import { mapActions, mapState } from 'pinia'
 import { badgeUrl } from '@/config/assets'
-import { mapState, mapMutations, mapGetters } from "@/stores/compat";
+;
 import dayjs from "dayjs";
 export default {
   name: "Services",
@@ -158,8 +160,8 @@ export default {
     };
   },
   computed: {
-    ...mapState("services", ["isLoadingServices", "loadingServicesText"]),
-    ...mapGetters("services", ["inProgressWildRiftEloBoosts"]),
+    ...mapState(useServicesStore, ["isLoadingServices", "loadingServicesText"]),
+    ...mapState(useServicesStore, ["inProgressWildRiftEloBoosts"]),
   },
   methods: {
     formatDate(dateDeadline) {

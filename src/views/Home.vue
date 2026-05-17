@@ -43,15 +43,19 @@
 import { API_BASE_URL, WEB_BASE_URL } from '@/config/api'
 // @ is an alias to /src
 import axios from 'axios'
-import { mapState, mapMutations } from '@/stores/compat'
+import { mapActions, mapState } from 'pinia'
+import { useAppStore } from '@/stores/app'
+import { useAuthStore } from '@/stores/auth'
+import { useLolStore } from '@/stores/lol'
+import { useServicesStore } from '@/stores/services'
 import _ from 'lodash'
 import LoLAccountDTO from '@/dtos/lol-account'
 
 export default {
   name: 'Home',
   computed: {
-    ...mapState('auth', ['token']),
-    ...mapState('lol', ['isLoLAuthenticated','summonerName','importedData','connectionData'])
+    ...mapState(useAuthStore, ['token']),
+    ...mapState(useLolStore, ['isLoLAuthenticated','summonerName','importedData','connectionData'])
   },
   data(){
     return {
@@ -83,8 +87,8 @@ export default {
     }
   },
   methods: {
-    ...mapMutations(['setImportedData']),
-    ...mapMutations('services', ['setServices']),
+    ...mapActions(useAppStore, ['setImportedData']),
+    ...mapActions(useServicesStore, ['setServices']),
     initializeImport() {
       // Asks the Rust LCU bridge for a fresh summoner + ranked snapshot. The
       // worker emits a `lol-account-data` event that App.vue picks up and

@@ -164,7 +164,9 @@
 </template>
 
 <script>
-import { mapState, mapMutations } from '@/stores/compat'
+import { useAppStore } from '@/stores/app'
+import { useSettingsStore } from '@/stores/settings'
+import { mapActions, mapState } from 'pinia'
 import _ from 'lodash'
 export default {
   name: 'Home',
@@ -194,8 +196,8 @@ export default {
     }
   },
   computed: {
-    ...mapState (['serviceNotificationSounds']),
-    ...mapState ("settings", [
+    ...mapState(useAppStore, ['serviceNotificationSounds']),
+    ...mapState(useSettingsStore, [
         'notifyNewServiceInQueue', 
         'playSoundOnNewNotification', 
         'playSoundOnNewChatItem', 
@@ -213,7 +215,7 @@ export default {
       ])
   },
   methods: {
-    ...mapMutations ("settings", [
+    ...mapActions(useSettingsStore, [
       "setLolPath", 
       "setNotifyNewServiceInQueue", 
       "setPlaySoundOnNewChatItem", 

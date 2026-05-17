@@ -1,31 +1,43 @@
 import { defineStore } from 'pinia'
-import { first as _first, assign as _assign } from 'lodash-es'
 import dayjs from 'dayjs'
 
 import servicesDTO from '@/dtos/services'
 import {
+  RAW_TYPE_TO_DTO_CONFIG,
   SERVICE_BUCKETS,
   emptyBuckets,
   filterInProgress,
   findServiceInState,
   isAllowed,
+  type ChatItem,
+  type Service,
   type ServiceBucket,
+  type ServiceRef,
 } from './service-collection'
 
-interface State extends Record<ServiceBucket, any[]> {
+interface State extends Record<ServiceBucket, Service[]> {
   isLoadingServices: boolean
   loadingServicesText: string
-  tempService: any | null
+  detailedService: Service | null
 }
 
 const generateInitialState = (): State => ({
   isLoadingServices: true,
   loadingServicesText: '',
   ...emptyBuckets(),
-  tempService: null,
+  detailedService: null,
 })
 
-/** Map operation suffix → which detail field & sign to apply. */
+function findActiveService(
+  store: { detailedService: Service | null; $state: Record<string, any> },
+  service: ServiceRef,
+): Service | null {
+  if (store.detailedService && store.detailedService.id === service.id) return store.detailedService
+  return findServiceInState(store.$state, service)
+}
+
+const inProgress = (bucket: ServiceBucket) => (s: State) => filterInProgress(s[bucket])
+
 const VICTORY_DEFEAT_OPS: Record<string, { field: 'victories' | 'defeats'; delta: 1 | -1 }> = {
   'add-victory': { field: 'victories', delta: 1 },
   'remove-victory': { field: 'victories', delta: -1 },
@@ -36,26 +48,34 @@ const VICTORY_DEFEAT_OPS: Record<string, { field: 'victories' | 'defeats'; delta
 export const useServicesStore = defineStore('services', {
   state: (): State => generateInitialState(),
   getters: {
-    inProgressEloBoosts: (s) => filterInProgress(s.eloBoosts),
-    inProgressWinBoosts: (s) => filterInProgress(s.winBoosts),
-    inProgressDuoBoosts: (s) => filterInProgress(s.duoBoosts),
-    inProgressPlacements: (s) => filterInProgress(s.placements),
-    inProgressMasteries: (s) => filterInProgress(s.masteries),
-    inProgressMaintenances: (s) => filterInProgress(s.maintenances),
-    inProgressCoachings: (s) => filterInProgress(s.coachings),
-    inProgressReplayAnalyses: (s) => filterInProgress(s.replayAnalyses),
-    inProgressValorantEloBoosts: (s) => filterInProgress(s.valorantEloBoosts),
-    inProgressValorantWinBoosts: (s) => filterInProgress(s.valorantWinBoosts),
-    inProgressValorantDuoBoosts: (s) => filterInProgress(s.valorantDuoBoosts),
-    inProgressValorantPlacements: (s) => filterInProgress(s.valorantPlacements),
-    inProgressWildRiftEloBoosts: (s) => filterInProgress(s.wildRiftEloBoosts),
-    inProgressWildRiftWinBoosts: (s) => filterInProgress(s.wildRiftWinBoosts),
-    inProgressWildRiftDuoBoosts: (s) => filterInProgress(s.wildRiftDuoBoosts),
-    inProgressWildRiftPlacements: (s) => filterInProgress(s.wildRiftPlacements),
-    inProgressTftEloBoosts: (s) => filterInProgress(s.tftEloBoosts),
-    inProgressTftWinBoosts: (s) => filterInProgress(s.tftWinBoosts),
-    inProgressTftPlacements: (s) => filterInProgress(s.tftPlacements),
-    inProgressTftPasses: (s) => filterInProgress(s.tftPasses),
+    inProgressEloBoosts: inProgress('eloBoosts'),
+    inProgressWinBoosts: inProgress('winBoosts'),
+    inProgressDuoBoosts: inProgress('duoBoosts'),
+    inProgressPlacements: inProgress('placements'),
+    inProgressMasteries: inProgress('masteries'),
+    inProgressMaintenances: inProgress('maintenances'),
+    inProgressCoachings: inProgress('coachings'),
+    inProgressReplayAnalyses: inProgress('replayAnalyses'),
+    inProgressValorantEloBoosts: inProgress('valorantEloBoosts'),
+    inProgressValorantWinBoosts: inProgress('valorantWinBoosts'),
+    inProgressValorantDuoBoosts: inProgress('valorantDuoBoosts'),
+    inProgressValorantPlacements: inProgress('valorantPlacements'),
+    inProgressWildRiftEloBoosts: inProgress('wildRiftEloBoosts'),
+    inProgressWildRiftWinBoosts: inProgress('wildRiftWinBoosts'),
+    inProgressWildRiftDuoBoosts: inProgress('wildRiftDuoBoosts'),
+    inProgressWildRiftPlacements: inProgress('wildRiftPlacements'),
+    inProgressTftEloBoosts: inProgress('tftEloBoosts'),
+    inProgressTftWinBoosts: inProgress('tftWinBoosts'),
+    inProgressTftPlacements: inProgress('tftPlacements'),
+    inProgressTftPasses: inProgress('tftPasses'),
+    serviceById: (s) => (id: number): Service | null => {
+      for (const bucket of SERVICE_BUCKETS) {
+        const found = s[bucket].find((svc) => svc.id === id)
+        if (found) return found
+      }
+      if (s.detailedService && s.detailedService.id === id) return s.detailedService
+      return null
+    },
   },
   actions: {
     resetServicesModule() {
@@ -68,85 +88,88 @@ export const useServicesStore = defineStore('services', {
       this.loadingServicesText = value
     },
     setServices(services: any) {
-      const result = servicesDTO.in(services, false)
+      const result = servicesDTO.in(services)
       for (const bucket of SERVICE_BUCKETS) {
-        ;(this as any)[bucket] = result[bucket]
+        this[bucket] = result[bucket]
       }
     },
-    setTempService({ service, onLoad }: { service: any; onLoad: (svc: any) => void }) {
-      const result = servicesDTO.in([service], true)
-      for (const bucket of SERVICE_BUCKETS) {
-        if (result[bucket].length) {
-          this.tempService = _first(result[bucket])
-          break
-        }
+    loadDetailedService(rawService: any): Service | null {
+      const config = RAW_TYPE_TO_DTO_CONFIG[rawService.type]
+      if (!config) {
+        this.detailedService = null
+        return null
       }
-      onLoad(this.tempService)
+      const processed = servicesDTO.in([rawService])[config.bucket][0]
+      if (!processed) {
+        this.detailedService = null
+        return null
+      }
+      const bucketArray: Service[] = this[config.bucket]
+      const index = bucketArray.findIndex((s) => s.id === processed.id)
+      if (index !== -1) {
+        bucketArray.splice(index, 1, processed)
+        this.detailedService = null
+        return bucketArray[index]
+      }
+      this.detailedService = processed
+      return processed
     },
-    resetTempService() {
-      this.tempService = null
+    resetDetailedService() {
+      this.detailedService = null
     },
-    setServiceAccount({ service, account }: { service: any; account: any }) {
+    setServiceAccount({ service, account }: { service: ServiceRef; account: any }) {
       if (!isAllowed('setServiceAccount', service.type)) return
-      this._applyToBoth(service, (s) => {
-        s.details.account = { ...account }
-      })
+      const target = findActiveService(this, service)
+      if (target) target.details.account = { ...account }
     },
-    setServiceAccountStatus({ service, accountStatus }: { service: any; accountStatus: any }) {
+    setServiceAccountStatus({ service, accountStatus }: { service: ServiceRef; accountStatus: any }) {
       if (!isAllowed('setServiceAccountStatus', service.type)) return
-      this._applyToBoth(service, (s) => {
-        s.details.account_status = accountStatus
-      })
+      const target = findActiveService(this, service)
+      if (target) target.details.account_status = accountStatus
     },
-    setServiceVictoriesDefeats({ service, operation }: { service: any; operation: string }) {
+    setServiceVictoriesDefeats({ service, operation }: { service: ServiceRef; operation: string }) {
       if (!isAllowed('setServiceVictoriesDefeats', service.type)) return
       const op = VICTORY_DEFEAT_OPS[operation]
       if (!op) return
-      this._applyToBoth(service, (s) => {
-        s.details[op.field] = parseInt(s.details[op.field]) + op.delta
-      })
+      const target = findActiveService(this, service)
+      if (target) target.details[op.field] = parseInt(target.details[op.field]) + op.delta
     },
-    setServiceCurrentVictories({ service, operation }: { service: any; operation: string }) {
+    setServiceCurrentVictories({ service, operation }: { service: ServiceRef; operation: string }) {
       if (!isAllowed('setServiceCurrentVictories', service.type)) return
       const delta = operation === 'add' ? 1 : -1
-      this._applyToBoth(service, (s) => {
-        s.details.current_victories = parseInt(s.details.current_victories) + delta
-      })
+      const target = findActiveService(this, service)
+      if (target) target.details.current_victories = parseInt(target.details.current_victories) + delta
     },
-    setServiceCurrentClassCount({ service, operation }: { service: any; operation: string }) {
+    setServiceCurrentClassCount({ service, operation }: { service: ServiceRef; operation: string }) {
       if (!isAllowed('setServiceCurrentClassCount', service.type)) return
       const delta = operation === 'add' ? 1 : -1
-      this._applyToBoth(service, (s) => {
-        s.details.current_class_count = parseInt(s.details.current_class_count) + delta
-      })
+      const target = findActiveService(this, service)
+      if (target) target.details.current_class_count = parseInt(target.details.current_class_count) + delta
     },
-    setServiceClientIsOnline({ service, isOnline }: { service: any; isOnline: boolean }) {
-      this._applyToBoth(service, (s) => {
-        _assign(s, { client: { ...s.client, isOnline } })
-      })
+    setServiceClientIsOnline({ service, isOnline }: { service: ServiceRef; isOnline: boolean }) {
+      const target = findActiveService(this, service)
+      if (target) target.client = { ...target.client, isOnline }
     },
-    addServiceChatItem({ service, chatItem }: { service: any; chatItem: any }) {
-      this._applyToBoth(service, (s) => {
-        s.chatItems.push(chatItem)
-      })
+    addServiceChatItem({ service, chatItem }: { service: ServiceRef; chatItem: ChatItem }) {
+      const target = findActiveService(this, service)
+      if (!target) return
+      if (target.chatItems.some((existing) => existing.uid === chatItem.uid)) return
+      target.chatItems.push(chatItem)
     },
     finishService({
       service,
       dateFinished,
       screenshot,
     }: {
-      service: any
+      service: ServiceRef
       dateFinished: any
-      screenshot: any
+      screenshot: string | null
     }) {
-      this._applyToBoth(service, (s) => {
-        _assign(s, { dateFinished: dayjs(dateFinished), screenshot, status: 'finished' })
-      })
-    },
-    _applyToBoth(service: { id: any; type: string }, mutate: (s: any) => void) {
-      if (this.tempService && this.tempService.id === service.id) mutate(this.tempService)
-      const s = findServiceInState(this.$state, service)
-      if (s) mutate(s)
+      const target = findActiveService(this, service)
+      if (!target) return
+      target.dateFinished = dayjs(dateFinished)
+      target.screenshot = screenshot
+      target.status = 'finished'
     },
   },
 })

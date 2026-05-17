@@ -28,7 +28,8 @@
 
 <script>
 import { markRaw } from 'vue'
-import { mapState, mapMutations } from '@/stores/compat'
+import { mapActions, mapState } from 'pinia'
+import { useAppStore } from '@/stores/app'
 import ServicesQueueMenuContent from './ServicesQueueDropdown.vue'
 import MyServicesMenuContent from './MyServicesDropdown.vue'
 
@@ -40,7 +41,7 @@ const CONTENT_REGISTRY = {
 export default {
   name: 'AppMenuDrawer',
   computed: {
-    ...mapState(['openDropdownMenu']),
+    ...mapState(useAppStore, ['openDropdownMenu']),
     isOpen() {
       return Boolean(this.openDropdownMenu)
     },
@@ -60,7 +61,7 @@ export default {
     document.removeEventListener('keydown', this.onKeydown)
   },
   methods: {
-    ...mapMutations(['setOpenDropdownMenu']),
+    ...mapActions(useAppStore, ['setOpenDropdownMenu']),
     close() {
       if (this.isOpen) this.setOpenDropdownMenu(null)
     },

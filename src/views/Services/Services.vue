@@ -503,7 +503,9 @@
 
 <script>
 import { badgeUrl } from '@/config/assets'
-import { mapState, mapMutations, mapGetters } from '@/stores/compat'
+import { mapActions, mapState } from 'pinia'
+import { useServicesStore } from '@/stores/services'
+import { useSettingsStore } from '@/stores/settings'
 import dayjs from 'dayjs'
 import LeagueOfLegendsButtonComponent from '@/components/Buttons/LeagueOfLegends.vue'
 import WildRiftButtonComponent from '@/components/Buttons/WildRift.vue'
@@ -533,9 +535,9 @@ export default {
     }
   },
   computed: {
-    ...mapState('settings', ['defaultGame']),
-    ...mapState('services', ['isLoadingServices', 'loadingServicesText']),
-    ...mapGetters('services', [
+    ...mapState(useSettingsStore, ['defaultGame']),
+    ...mapState(useServicesStore, ['isLoadingServices', 'loadingServicesText']),
+    ...mapState(useServicesStore, [
       'inProgressEloBoosts', 'inProgressPlacements', 'inProgressDuoBoosts', 'inProgressWinBoosts',
       'inProgressWildRiftEloBoosts', 'inProgressWildRiftPlacements', 'inProgressWildRiftDuoBoosts', 'inProgressWildRiftWinBoosts'
     ]),
@@ -547,7 +549,7 @@ export default {
     }
   },
   methods: {
-    ...mapMutations('settings', ['setDefaultGame']),
+    ...mapActions(useSettingsStore, ['setDefaultGame']),
     formatDate (dateDeadline) {
       return dayjs(dateDeadline).format("DD/MM/YY HH:mm")
     },

@@ -80,7 +80,14 @@ import { API_BASE_URL, WEB_BASE_URL } from '@/config/api'
 import _ from 'lodash'
 import axios from 'axios'
 import { useModal } from 'vue-final-modal'
-import { mapState, mapMutations } from '@/stores/compat'
+import { mapActions, mapState } from 'pinia'
+import { useAppStore } from '@/stores/app'
+import { useAuthStore } from '@/stores/auth'
+import { useLolStore } from '@/stores/lol'
+import { useNotificationsStore } from '@/stores/notifications'
+import { useServicesStore } from '@/stores/services'
+import { useServicesQueueStore } from '@/stores/services-queue'
+import { useSettingsStore } from '@/stores/settings'
 import LoLAccountDTO from '@/dtos/lol-account'
 import LogoutConfirmModal from '@/components/modals/LogoutConfirmModal.vue'
 import UpdateAvailableModal from '@/components/modals/UpdateAvailableModal.vue'
@@ -104,10 +111,10 @@ export default {
     }
   },
   computed: {
-    ...mapState(['appVersion', 'isCheckingForUpdates', 'hasNewRelease', 'updateDownloadStatus', 'isUpdateReadyToInstall']),
-    ...mapState('auth', ['token', 'user']),
-    ...mapState('settings', ['lolPath', 'lolAutoQueue']),
-    ...mapState('lol', ['isLoLAuthenticated', 'summonerName']),
+    ...mapState(useAppStore, ['appVersion', 'isCheckingForUpdates', 'hasNewRelease', 'updateDownloadStatus', 'isUpdateReadyToInstall']),
+    ...mapState(useAuthStore, ['token', 'user']),
+    ...mapState(useSettingsStore, ['lolPath', 'lolAutoQueue']),
+    ...mapState(useLolStore, ['isLoLAuthenticated', 'summonerName']),
     isServicesQueueActive() {
       return this.$route.path.includes('/services-queue/') || this.$route.path === '/services-queue'
     },
@@ -116,12 +123,12 @@ export default {
     },
   },
   methods: {
-    ...mapMutations(['setUpdateDownloadStatus', 'setIsCheckingForUpdates', 'setHasNewRelease', 'setUpdateReadyToInstall', 'setOpenDropdownMenu']),
-    ...mapMutations('lol', ['setConnectionData', 'setIsLolAuthenticated', 'setSummonerName', 'setImportedData']),
-    ...mapMutations('auth', ['logout']),
-    ...mapMutations('services', ['resetServicesModule']),
-    ...mapMutations('services-queue', ['resetServicesQueueModule']),
-    ...mapMutations('notifications', ['resetNotificationsModule']),
+    ...mapActions(useAppStore, ['setUpdateDownloadStatus', 'setIsCheckingForUpdates', 'setHasNewRelease', 'setUpdateReadyToInstall', 'setOpenDropdownMenu']),
+    ...mapActions(useLolStore, ['setConnectionData', 'setIsLolAuthenticated', 'setSummonerName', 'setImportedData']),
+    ...mapActions(useAuthStore, ['logout']),
+    ...mapActions(useServicesStore, ['resetServicesModule']),
+    ...mapActions(useServicesQueueStore, ['resetServicesQueueModule']),
+    ...mapActions(useNotificationsStore, ['resetNotificationsModule']),
     openExternalSite() {
       this.$bridge.send('new-window', `${WEB_BASE_URL}/v2/br`)
     },

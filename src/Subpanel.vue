@@ -65,10 +65,15 @@
 </template>
 
 <script>
+import { useAppStore } from '@/stores/app'
+import { useAuthStore } from '@/stores/auth'
+import { useNotificationsStore } from '@/stores/notifications'
+import { useServicesStore } from '@/stores/services'
+import { useServicesQueueStore } from '@/stores/services-queue'
+import { mapActions, mapState } from 'pinia'
 import { soundUrl } from '@/config/assets'
 import { API_BASE_URL, WEB_BASE_URL, PUSHER_KEY, PUSHER_CLUSTER } from '@/config/api'
 import { pusherConnectionState } from '@/config/pusher-channels'
-import { mapState, mapMutations } from "@/stores/compat"
 import axios from "axios"
 import dayjs from "dayjs"
 import { Howl } from 'howler'
@@ -89,9 +94,9 @@ export default {
     };
   },
   computed: {
-    ...mapState("auth", ["user", "token"]),
-    ...mapState("notifications", ["isLoadingNotifications", "loadingNotificationsText", "notifications"]),
-    ...mapState(["currentServiceId", "currentServiceTab"]),
+    ...mapState(useAuthStore, ["user", "token"]),
+    ...mapState(useNotificationsStore, ["isLoadingNotifications", "loadingNotificationsText", "notifications"]),
+    ...mapState(useAppStore, ["currentServiceId", "currentServiceTab"]),
     groupedNotifications(){
       const groupedNotifications = []
       _.forEach(this.notifications, (notification) => {
@@ -113,11 +118,11 @@ export default {
     }
   },
   methods: {
-    ...mapMutations('auth', ['setUser']),
-    ...mapMutations('services-queue', ['setIsLoadingServicesQueue', 'setLoadingServicesQueueText', 'setServicesQueue', 'setServicesQueueFetchServerTime']),
-    ...mapMutations('services', ['setIsLoadingServices', 'setLoadingServicesText', 'setServices']),
-    ...mapMutations('notifications', ['setIsLoadingNotifications', 'setLoadingNotificationsText', 'setNotifications']),
-    ...mapMutations(['setCurrentService', 'setServiceNotificationSound', 'setServiceNotificationSounds', 'setChatMessageSound', 'setNotificationSound']),
+    ...mapActions(useAuthStore, ['setUser']),
+    ...mapActions(useServicesQueueStore, ['setIsLoadingServicesQueue', 'setLoadingServicesQueueText', 'setServicesQueue', 'setServicesQueueFetchServerTime']),
+    ...mapActions(useServicesStore, ['setIsLoadingServices', 'setLoadingServicesText', 'setServices']),
+    ...mapActions(useNotificationsStore, ['setIsLoadingNotifications', 'setLoadingNotificationsText', 'setNotifications']),
+    ...mapActions(useAppStore, ['setCurrentService', 'setServiceNotificationSound', 'setServiceNotificationSounds', 'setChatMessageSound', 'setNotificationSound']),
     async loadTransactions() {
       this.isError = false;
       this.isLoadingTransactions = true;

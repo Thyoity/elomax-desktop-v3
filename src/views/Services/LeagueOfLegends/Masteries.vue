@@ -117,9 +117,11 @@
 </template>
 
 <script>
+import { useServicesStore } from '@/stores/services'
+import { mapActions, mapState } from 'pinia'
 import { badgeUrl } from '@/config/assets'
 import { API_BASE_URL, championImageUrl } from '@/config/api'
-import { mapState, mapMutations, mapGetters } from "@/stores/compat";
+;
 import dayjs from "dayjs";
 export default {
   name: "Services",
@@ -142,8 +144,8 @@ export default {
     };
   },
   computed: {
-    ...mapState("services", ["isLoadingServices", "loadingServicesText"]),
-    ...mapGetters("services", ["inProgressMasteries"]),
+    ...mapState(useServicesStore, ["isLoadingServices", "loadingServicesText"]),
+    ...mapState(useServicesStore, ["inProgressMasteries"]),
   },
   methods: {
     formatDate(dateDeadline) {

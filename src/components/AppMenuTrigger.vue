@@ -17,8 +17,8 @@
 </template>
 
 <script>
-import { mapState, mapMutations } from '@/stores/compat'
-
+import { mapActions, mapState } from 'pinia'
+import { useAppStore } from '@/stores/app'
 export default {
   name: 'AppMenuTrigger',
   props: {
@@ -32,13 +32,13 @@ export default {
     tooltip: { type: String, default: '' },
   },
   computed: {
-    ...mapState(['openDropdownMenu']),
+    ...mapState(useAppStore, ['openDropdownMenu']),
     isOpen() {
       return this.openDropdownMenu === this.name
     },
   },
   methods: {
-    ...mapMutations(['setOpenDropdownMenu']),
+    ...mapActions(useAppStore, ['setOpenDropdownMenu']),
     toggle() {
       this.setOpenDropdownMenu(this.isOpen ? null : this.name)
     },

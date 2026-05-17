@@ -798,10 +798,14 @@
 </template>
 
 <script>
+import { useAppStore } from '@/stores/app'
+import { useAuthStore } from '@/stores/auth'
+import { useServicesStore } from '@/stores/services'
+import { mapActions, mapState } from 'pinia'
 import { defineAsyncComponent } from 'vue'
 import { badgeUrl } from '@/config/assets'
 import { API_BASE_URL, championImageUrl } from '@/config/api'
-import { mapState, mapMutations } from "@/stores/compat";
+;
 import _ from "lodash";
 import axios from "axios";
 import dayjs from "dayjs";
@@ -878,8 +882,8 @@ export default {
     };
   },
   computed: {
-    ...mapState("auth", ["token"]),
-    ...mapState("services", [
+    ...mapState(useAuthStore, ["token"]),
+    ...mapState(useServicesStore, [
       "isLoadingServices",
       "loadingServicesText",
 
@@ -928,10 +932,10 @@ export default {
     },
   },
   methods: {
-    ...mapMutations(["setCurrentService"]),
-    ...mapMutations("services", [
-      "setTempService",
-      "resetTempService",
+    ...mapActions(useAppStore, ["setCurrentService"]),
+    ...mapActions(useServicesStore, [
+      "loadDetailedService",
+      "resetDetailedService",
       "setServiceAccount",
       "setServiceAccountStatus",
       "setServiceCurrentVictories",
@@ -1049,19 +1053,9 @@ export default {
           this.$router.replace("/").catch(() => {});
           return;
         }
-        this.setTempService({
-          service: data.data,
-          onLoad: (loadedService) => {
-            this.service = loadedService;
-            if (!this.service && service) this.service = service;
-            if (
-              this.service &&
-              this.service.details &&
-              this.service.details.account
-            )
-              this.setAccountForm();
-          },
-        });
+        const loaded = this.loadDetailedService(data.data);
+        this.service = loaded ?? service ?? null;
+        if (this.service?.details?.account) this.setAccountForm();
       } catch {
         if (service) {
           this.service = service;
@@ -1222,7 +1216,7 @@ export default {
     this.loadService(serviceId);
   },
   beforeUnmount() {
-    this.resetTempService();
+    this.resetDetailedService();
     this.setCurrentService({
       serviceId: null,
       tab: null,

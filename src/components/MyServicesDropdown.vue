@@ -80,14 +80,14 @@
 </template>
 
 <script>
-import { mapGetters } from '@/stores/compat'
-
+import { mapState } from 'pinia'
+import { useServicesStore } from '@/stores/services'
 const SERVICES_BASE = '/services'
 
 export default {
   name: 'MyServicesMenuContent',
   computed: {
-    ...mapGetters('services', [
+    ...mapState(useServicesStore, [
       'inProgressEloBoosts',
       'inProgressPlacements',
       'inProgressDuoBoosts',

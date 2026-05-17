@@ -3,6 +3,8 @@ import dayjs from 'dayjs'
 import {
   RAW_TYPE_TO_DTO_CONFIG,
   SERVICE_BUCKETS,
+  type ChatItem,
+  type Service,
   type ServiceBucket,
 } from '@/stores/service-collection'
 
@@ -22,10 +24,10 @@ const pushExtra = (extras: any[], rawType: string, value: any) => {
   extras.push({ type, value })
 }
 
-const processChatItems = (chatItems: any[] | undefined, userId: number) => {
+const processChatItems = (chatItems: any[] | undefined, userId: number): ChatItem[] => {
   if (!chatItems || !Array.isArray(chatItems) || chatItems.length === 0) return []
 
-  const processed: any[] = []
+  const processed: ChatItem[] = []
   let lastDateDay: string | null = null
 
   for (const item of chatItems) {
@@ -50,7 +52,7 @@ const processChatItems = (chatItems: any[] | undefined, userId: number) => {
   return processed
 }
 
-const processDefaultServiceStructure = (service: any) => {
+const processDefaultServiceStructure = (service: any): Omit<Service, 'type'> => {
   const extrasObject = JSON.parse(service.details.extras)
   const extras: any[] = []
   if (extrasObject && extrasObject.constructor === Object) {
@@ -78,14 +80,10 @@ const processDefaultServiceStructure = (service: any) => {
   }
 }
 
-export type ServicesDtoOutput = Record<ServiceBucket, any[]>
+export type ServicesDtoOutput = Record<ServiceBucket, Service[]>
 
 export default {
-  /**
-   * Fans an array of server-shaped services into 20 buckets keyed by internal
-   * camelCase names. Unknown server types are dropped silently (matches legacy).
-   */
-  in(services: any[] = [], isTemp = false): ServicesDtoOutput {
+  in(services: any[] = []): ServicesDtoOutput {
     const buckets = {} as ServicesDtoOutput
     for (const key of SERVICE_BUCKETS) buckets[key] = []
 
@@ -94,10 +92,9 @@ export default {
     for (const service of services) {
       const config = RAW_TYPE_TO_DTO_CONFIG[service.type]
       if (!config) continue
-      const processed = {
+      const processed: Service = {
         ...processDefaultServiceStructure(service),
         type: config.type,
-        isTemp,
       }
       config.postprocess?.(processed)
       buckets[config.bucket].push(processed)

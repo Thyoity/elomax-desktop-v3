@@ -128,7 +128,6 @@
 </template>
 <script>
 import { badgeUrl, imageUrl } from '@/config/assets'
-import { mapState, mapMutations } from "@/stores/compat";
 import axios from "axios";
 export default {
   props: ["service"],

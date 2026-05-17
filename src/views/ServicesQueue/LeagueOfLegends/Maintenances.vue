@@ -128,8 +128,11 @@
 </template>
 
 <script>
+import { useSettingsStore } from '@/stores/settings'
+import { useServicesQueueStore } from '@/stores/services-queue'
+import { mapActions, mapState } from 'pinia'
 import { badgeUrl } from '@/config/assets'
-import { mapState, mapMutations } from "@/stores/compat";
+;
 export default {
   name: "ServicesQueue",
     data() {
@@ -151,14 +154,14 @@ export default {
     };
   },
   computed: {
-    ...mapState("services-queue", [
+    ...mapState(useServicesQueueStore, [
       "isLoadingServicesQueue",
       "loadingServicesQueueText",
       "queueMaintenances",
     ]),
   },
   methods: {
-    ...mapMutations("settings", ["setDefaultGame"]),
+    ...mapActions(useSettingsStore, ["setDefaultGame"]),
     hasDivision(tier) {
       return (
         tier !== "unranked" &&

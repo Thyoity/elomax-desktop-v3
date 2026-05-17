@@ -32,15 +32,17 @@
 </template>
 <script>
 import { API_BASE_URL, WEB_BASE_URL } from '@/config/api'
-import { mapState, mapMutations } from '@/stores/compat'
+import { mapActions, mapState } from 'pinia'
+import { useAuthStore } from '@/stores/auth'
+import { useNotificationsStore } from '@/stores/notifications'
 import { useServicesStore } from '@/stores/services'
 import axios from 'axios'
 import dayjs from 'dayjs'
 export default {
   props: ['service'],
   computed: {
-    ...mapState ('auth', ['user', 'token']),
-    ...mapState ('notifications', ['notifications']),
+    ...mapState(useAuthStore, ['user', 'token']),
+    ...mapState(useNotificationsStore, ['notifications']),
     isMessageSendable () {
       if (!this.inputValue || this.inputValue.length < 1) {
         return false
@@ -54,8 +56,8 @@ export default {
     }
   },
   methods: {
-    ...mapMutations('services', ['addServiceChatItem']),
-    ...mapMutations ('notifications', ['addNotification','removeServiceNotifications']),
+    ...mapActions(useServicesStore, ['addServiceChatItem']),
+    ...mapActions(useNotificationsStore, ['addNotification','removeServiceNotifications']),
     generateUniqueId () {
       return '' + this.user.id + this.service.id + new Date().valueOf()
     },

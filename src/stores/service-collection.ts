@@ -1,13 +1,6 @@
-/**
- * Single source of truth for the 20 service "buckets" used across the services
- * and services-queue stores, the services DTO, and any UI that filters services
- * by their internal `type` string.
- *
- * Adding a new service variant is a one-line change here.
- */
 import { filter as _filter, find as _find } from 'lodash-es'
+import type { Dayjs } from 'dayjs'
 
-/** Internal (camelCase) service `type` → state bucket key (plural camelCase). */
 export const SERVICE_TYPE_TO_BUCKET = {
   eloBoost: 'eloBoosts',
   winBoost: 'winBoosts',
@@ -34,13 +27,43 @@ export const SERVICE_TYPE_TO_BUCKET = {
 export type ServiceType = keyof typeof SERVICE_TYPE_TO_BUCKET
 export type ServiceBucket = (typeof SERVICE_TYPE_TO_BUCKET)[ServiceType]
 
+export type ChatItemType = 'my-message' | 'their-message' | 'date'
+
+export interface ChatItem {
+  id: string | number
+  uid: string | number
+  type: ChatItemType
+  value: string
+  time?: string
+}
+
+export interface ServiceClient {
+  id: number
+  username: string
+  isOnline: boolean
+}
+
+export interface Service {
+  id: number
+  type: ServiceType
+  amount: string
+  boosterAmount: string
+  chatItems: ChatItem[]
+  description: string | null
+  details: Record<string, any>
+  client: ServiceClient
+  dateAcceptable: Dayjs | null
+  dateUpdated: string
+  dateFinished: Dayjs | null
+  screenshot: string | null
+  status: string
+}
+
+export type ServiceRef = Pick<Service, 'id' | 'type'>
+
 export const SERVICE_TYPES = Object.keys(SERVICE_TYPE_TO_BUCKET) as ServiceType[]
 export const SERVICE_BUCKETS = Object.values(SERVICE_TYPE_TO_BUCKET) as ServiceBucket[]
 
-/**
- * Mirrors the per-action allow-lists from the legacy Vuex store. Actions
- * not listed here accept every type in SERVICE_TYPE_TO_BUCKET.
- */
 const DUO_TYPES: ServiceType[] = ['duoBoost', 'valorantDuoBoost', 'wildRiftDuoBoost']
 
 export const ACTION_ALLOWED_TYPES = {
@@ -70,32 +93,22 @@ export type RestrictedAction = keyof typeof ACTION_ALLOWED_TYPES
 export const isAllowed = (action: RestrictedAction, type: string): boolean =>
   (ACTION_ALLOWED_TYPES[action] as readonly string[]).includes(type)
 
-/**
- * Finds the service instance in whichever bucket its `type` maps to.
- * Returns null if `type` is unknown or no matching id is found.
- */
 export function findServiceInState(
   state: Record<string, any>,
-  service: { type: string; id: any },
-): any | null {
-  const bucket = SERVICE_TYPE_TO_BUCKET[service.type as ServiceType]
+  service: ServiceRef,
+): Service | null {
+  const bucket = SERVICE_TYPE_TO_BUCKET[service.type]
   if (!bucket) return null
-  return _find(state[bucket], { id: service.id }) || null
+  return (_find(state[bucket], { id: service.id }) as Service | undefined) || null
 }
 
-/** `arr.filter(s => s.status === 'in_progress')` factored out. */
 export const filterInProgress = <T extends { status: string }>(arr: T[]): T[] =>
   _filter(arr, (i) => i.status === 'in_progress')
 
-/**
- * Server payload `type` strings (snake_case) → internal bucket + camelCase type.
- * Used by the services DTO to fan items into per-game buckets without a long
- * if/else chain. `postprocess` runs against the *processed* service object.
- */
 export interface DtoTypeConfig {
   bucket: ServiceBucket
   type: ServiceType
-  postprocess?: (service: any) => void
+  postprocess?: (service: Service) => void
 }
 
 export const RAW_TYPE_TO_DTO_CONFIG: Record<string, DtoTypeConfig> = {
@@ -127,9 +140,8 @@ export const RAW_TYPE_TO_DTO_CONFIG: Record<string, DtoTypeConfig> = {
   tft_pass: { bucket: 'tftPasses', type: 'tftPass' },
 }
 
-/** Empty `Record<ServiceBucket, any[]>` skeleton for store/DTO initial state. */
-export const emptyBuckets = (): Record<ServiceBucket, any[]> => {
-  const out = {} as Record<ServiceBucket, any[]>
+export const emptyBuckets = (): Record<ServiceBucket, Service[]> => {
+  const out = {} as Record<ServiceBucket, Service[]>
   for (const bucket of SERVICE_BUCKETS) out[bucket] = []
   return out
 }

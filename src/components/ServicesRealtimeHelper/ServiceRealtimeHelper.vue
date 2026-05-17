@@ -4,7 +4,12 @@
 
 <script>
 import dayjs from 'dayjs'
-import { mapState, mapMutations } from '@/stores/compat'
+import { mapActions, mapState } from 'pinia'
+import { useAppStore } from '@/stores/app'
+import { useAuthStore } from '@/stores/auth'
+import { useNotificationsStore } from '@/stores/notifications'
+import { useServicesStore } from '@/stores/services'
+import { useSettingsStore } from '@/stores/settings'
 import {
   pusherChannel,
   pusherEvents,
@@ -14,16 +19,16 @@ import {
 export default {
   props: ['service'],
   computed: {
-    ...mapState('auth', ['user']),
-    ...mapState('settings', ['playSoundOnNewNotification', 'playSoundOnNewChatItem']),
-    ...mapState(['currentServiceId', 'currentServiceTab', 'notificationSound', 'chatMessageSound']),
+    ...mapState(useAuthStore, ['user']),
+    ...mapState(useSettingsStore, ['playSoundOnNewNotification', 'playSoundOnNewChatItem']),
+    ...mapState(useAppStore, ['currentServiceId', 'currentServiceTab', 'notificationSound', 'chatMessageSound']),
     channelName() {
       return pusherChannel.presenceService(this.service.id)
     },
   },
   methods: {
-    ...mapMutations('services', ['setServiceClientIsOnline', 'addServiceChatItem']),
-    ...mapMutations('notifications', ['addNotification']),
+    ...mapActions(useServicesStore, ['setServiceClientIsOnline', 'addServiceChatItem']),
+    ...mapActions(useNotificationsStore, ['addNotification']),
     onSubscriptionSucceeded(data) {
       const isClientOnline = !!data?.members?.[this.service.client.id]
       this.setServiceClientIsOnline({ service: this.service, isOnline: isClientOnline })

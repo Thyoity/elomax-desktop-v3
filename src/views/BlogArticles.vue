@@ -101,7 +101,8 @@
 
 <script>
 import { API_BASE_URL, WEB_BASE_URL } from '@/config/api'
-import { mapState, mapMutations } from "@/stores/compat";
+import { mapState } from "pinia";
+import { useAuthStore } from "@/stores/auth";
 import _ from "lodash";
 import axios from "axios";
 
@@ -115,7 +116,7 @@ export default {
   },
 
   computed: {
-    ...mapState("auth", ["token"]),
+    ...mapState(useAuthStore, ["token"]),
   },
   methods: {
     openArticle(article) {

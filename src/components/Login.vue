@@ -49,7 +49,9 @@
 </template>
 
 <script>
-import { mapState, mapMutations } from '@/stores/compat'
+import { mapActions, mapState } from 'pinia'
+import { useAppStore } from '@/stores/app'
+import { useAuthStore } from '@/stores/auth'
 import { authApi } from '@/services/auth-api'
 
 export default {
@@ -63,10 +65,10 @@ export default {
     }
   },
   computed: {
-    ...mapState(['appVersion']),
+    ...mapState(useAppStore, ['appVersion']),
   },
   methods: {
-    ...mapMutations('auth', ['authenticate']),
+    ...mapActions(useAuthStore, ['authenticate']),
     async onSubmit() {
       if (this.isLoading) return
       this.isLoading = true
