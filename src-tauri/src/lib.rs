@@ -15,6 +15,13 @@ pub struct LcuState {
     pub password: Option<String>,
     pub port: Option<u16>,
     pub connected: bool,
+    /// Last summoner snapshot we received (either from the initial HTTP
+    /// fetch in `connect` or from the WebSocket's `current-summoner` event).
+    /// Cached so a renderer that mounts AFTER the initial emit (very common
+    /// in prod where Vue init takes longer than the lockfile watcher's
+    /// first `connect()` call) can still see the connected state when it
+    /// dispatches `lol-connect` — without us having to re-fetch.
+    pub summoner_data: Option<serde_json::Value>,
     /// Handle to the WebSocket worker task. Aborted on forced reconnect so we
     /// never run two workers at once.
     pub ws_task: Option<tokio::task::JoinHandle<()>>,

@@ -267,9 +267,17 @@ export default {
     //      possible on rapid create/delete bursts). The heartbeat guarantees
     //      the app heals within ~30s even if that happens.
     if (!this.lolConnectionInterval) {
-      this.lolConnectionInterval = setInterval(() => {
+      const reconcileLcu = () => {
         if (!this.isLoLAuthenticated) this.$bridge.send('lol-connect', this.lolPath)
-      }, 30000)
+      }
+      // Immediate dispatch on mount so the renderer picks up a connection
+      // the Rust-side lockfile watcher established before Vue finished
+      // mounting. Without this, the user has to wait up to 30s (the
+      // heartbeat interval below) before the UI reflects an already-
+      // connected LoL client. The connect() Rust handler is idempotent
+      // and re-emits cached summoner data when the connection is stable.
+      reconcileLcu()
+      this.lolConnectionInterval = setInterval(reconcileLcu, 30000)
     }
     this.$bridge.send('ready-for-update-check')
     // Re-check every 10 minutes. The guard skips ticks where a check is

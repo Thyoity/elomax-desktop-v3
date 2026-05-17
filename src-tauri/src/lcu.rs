@@ -180,14 +180,20 @@ pub async fn connect(app: AppHandle, path: Option<String>) -> Result<(), String>
     };
 
     // Stale-connection guard: if the cached port/password still match the
-    // lockfile AND we believe we're connected, do nothing. Otherwise force a
-    // reconnect (LoL may have restarted with new credentials).
+    // lockfile AND we believe we're connected, skip the full reconnect.
+    // But still re-emit the cached summoner snapshot so a renderer that
+    // just mounted and missed the original emit can update its UI.
     {
         let state = LCU_STATE.lock();
         if state.connected
             && state.port == Some(lock.port)
             && state.password.as_deref() == Some(&lock.password)
         {
+            let cached = state.summoner_data.clone();
+            drop(state);
+            if let Some(data) = cached {
+                emit_connect_success(&app, lock.port, &lock.password, data);
+            }
             return Ok(());
         }
     }
@@ -204,6 +210,7 @@ pub async fn connect(app: AppHandle, path: Option<String>) -> Result<(), String>
         state.connected = false;
         state.password = None;
         state.port = None;
+        state.summoner_data = None;
     }
 
     let client = permissive_client()?;
@@ -234,6 +241,7 @@ pub async fn connect(app: AppHandle, path: Option<String>) -> Result<(), String>
                 {
                     if let Ok(data) = summoner.json::<Value>().await {
                         emit_connect_success(&app, lock.port, &lock.password, data.clone());
+                        LCU_STATE.lock().summoner_data = Some(data.clone());
                         // Best-effort ranked snapshot.
                         if let Err(msg) =
                             fetch_and_emit_account_data(&app, &client, lock.port, &lock.password)
@@ -364,7 +372,10 @@ async fn run_ws(app: AppHandle, port: u16, password: String) -> Result<(), Strin
             // shape as the initial HTTP-fetched snapshot (i.e. summoner fields
             // at the top level: `gameName`, `displayName`, `summonerLevel`, …).
             let summoner = to_emit.get("data").cloned().unwrap_or(Value::Null);
-            emit_connect_success(&app, port, &password, summoner);
+            emit_connect_success(&app, port, &password, summoner.clone());
+            // Refresh the cache so a stale-but-matching `connect()` call from
+            // the renderer's heartbeat can still re-emit current data.
+            LCU_STATE.lock().summoner_data = Some(summoner);
         } else if uri == "/lol-matchmaking/v1/ready-check" {
             let data = to_emit.get("data").cloned().unwrap_or(Value::Null);
             let player_response = data
@@ -578,6 +589,7 @@ async fn sync_lockfile_state(app: &AppHandle, lockfile: &PathBuf) {
         state.connected = false;
         state.password = None;
         state.port = None;
+        state.summoner_data = None;
         was
     };
 
